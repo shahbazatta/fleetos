@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 export default function LoginPage() {
-  const { login, isLoading, error } = useAuthStore();
-  const [email, setEmail] = useState('admin@cloudnext.com');
+  const { login, isLoading, error, token } = useAuthStore();
+  const [email,    setEmail]    = useState('admin@cloudnext.com');
   const [password, setPassword] = useState('admin123');
+  const navigate = useNavigate();
+
+  // If already authenticated, redirect immediately
+  useEffect(() => {
+    if (token) navigate('/', { replace: true });
+  }, [token, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(email, password);
+    const ok = await login(email, password);
+    if (ok) navigate('/', { replace: true });
   };
 
   const inputStyle: React.CSSProperties = {
@@ -74,13 +82,27 @@ export default function LoginPage() {
               <label style={{ fontSize: 11, color: '#5d7a9a', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
                 Email
               </label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} required />
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                style={inputStyle}
+                required
+                autoComplete="email"
+              />
             </div>
             <div>
               <label style={{ fontSize: 11, color: '#5d7a9a', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
                 Password
               </label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} required />
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                style={inputStyle}
+                required
+                autoComplete="current-password"
+              />
             </div>
 
             <button
