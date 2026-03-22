@@ -20,17 +20,17 @@
 --    8. Verification queries
 -- ============================================================
 
--- \echo ''
--- \echo '══════════════════════════════════════════════════════'
--- \echo '  CloudNext Fleet DB Bootstrap'
--- \echo '══════════════════════════════════════════════════════'
--- \echo ''
+
+DO $$ BEGIN RAISE NOTICE '======================================================'; END $$;
+DO $$ BEGIN RAISE NOTICE '  CloudNext Fleet DB Bootstrap'; END $$;
+DO $$ BEGIN RAISE NOTICE '======================================================'; END $$;
+
 
 -- ──────────────────────────────────────────────────────────
 -- 0. SAFETY: drop everything cleanly on re-run
 -- ──────────────────────────────────────────────────────────
 
--- \echo '[0] Dropping existing objects (clean re-run)...'
+DO $$ BEGIN RAISE NOTICE '[0] Dropping existing objects (clean re-run)...'; END $$;
 
 DROP VIEW  IF EXISTS v_fleet_live             CASCADE;
 DROP VIEW  IF EXISTS v_geofence_violations     CASCADE;
@@ -64,13 +64,13 @@ DROP TYPE IF EXISTS driver_status   CASCADE;
 DROP TYPE IF EXISTS trip_status     CASCADE;
 DROP TYPE IF EXISTS maintenance_type CASCADE;
 
--- \echo '    ✓ clean'
+DO $$ BEGIN RAISE NOTICE '    [OK] clean'; END $$;
 
 -- ──────────────────────────────────────────────────────────
 -- 1. EXTENSIONS
 -- ──────────────────────────────────────────────────────────
 
--- \echo '[1] Installing extensions...'
+DO $$ BEGIN RAISE NOTICE '[1] Installing extensions...'; END $$;
 
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS postgis_topology;
@@ -78,14 +78,13 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;      -- fuzzy text search
 CREATE EXTENSION IF NOT EXISTS btree_gist;   -- combined btree+gist indexes
 
-SELECT PostGIS_Full_Version() AS postgis_version \gset
--- \echo '    ✓ PostGIS ' :postgis_version
+DO $$ BEGIN RAISE NOTICE 'Extensions installed (PostGIS ready)'; END $$;
 
 -- ──────────────────────────────────────────────────────────
 -- 2. ENUMS
 -- ──────────────────────────────────────────────────────────
 
--- \echo '[2] Creating enums...'
+DO $$ BEGIN RAISE NOTICE '[2] Creating enums...'; END $$;
 
 CREATE TYPE vehicle_status AS ENUM (
     'active',        -- moving / engine on
@@ -131,13 +130,13 @@ CREATE TYPE maintenance_type AS ENUM (
     'electrical', 'bodywork', 'inspection', 'other'
 );
 
--- \echo '    ✓ 6 enums created'
+DO $$ BEGIN RAISE NOTICE '    [OK] 6 enums created'; END $$;
 
 -- ──────────────────────────────────────────────────────────
 -- 3. TABLES
 -- ──────────────────────────────────────────────────────────
 
--- \echo '[3] Creating tables...'
+DO $$ BEGIN RAISE NOTICE '[3] Creating tables...'; END $$;
 
 -- ── users ──────────────────────────────────────────────────
 
@@ -469,13 +468,13 @@ CREATE TABLE maintenance (
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- \echo '    ✓ 10 tables created'
+DO $$ BEGIN RAISE NOTICE '    [OK] 10 tables created'; END $$;
 
 -- ──────────────────────────────────────────────────────────
 -- 4. INDEXES
 -- ──────────────────────────────────────────────────────────
 
--- \echo '[4] Creating indexes...'
+DO $$ BEGIN RAISE NOTICE '[4] Creating indexes...'; END $$;
 
 -- Spatial GIST indexes (critical for ST_Within, ST_DWithin, etc.)
 CREATE INDEX idx_vehicles_location   ON vehicles   USING GIST (current_location);
@@ -525,13 +524,13 @@ CREATE INDEX idx_drivers_name_trgm   ON drivers  USING GIN (full_name gin_trgm_o
 CREATE INDEX idx_telemetry_vid_range ON telemetry (vehicle_id, recorded_at)
     WHERE engine_on = TRUE;
 
--- \echo '    ✓ 30 indexes created (8 GIST spatial, 22 B-Tree/GIN)'
+DO $$ BEGIN RAISE NOTICE '    [OK] 30 indexes created (8 GIST spatial, 22 B-Tree/GIN)'; END $$;
 
 -- ──────────────────────────────────────────────────────────
 -- 5. TRIGGERS & FUNCTIONS
 -- ──────────────────────────────────────────────────────────
 
--- \echo '[5] Creating triggers and functions...'
+DO $$ BEGIN RAISE NOTICE '[5] Creating triggers and functions...'; END $$;
 
 -- 5a. Auto-update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at()
@@ -737,13 +736,13 @@ RETURNS TABLE (
     FROM vehicles;
 $$;
 
--- \echo '    ✓ 6 triggers, 5 functions created'
+DO $$ BEGIN RAISE NOTICE '    [OK] 6 triggers, 5 functions created'; END $$;
 
 -- ──────────────────────────────────────────────────────────
 -- 6. VIEWS
 -- ──────────────────────────────────────────────────────────
 
--- \echo '[6] Creating views...'
+DO $$ BEGIN RAISE NOTICE '[6] Creating views...'; END $$;
 
 -- Live fleet overview (primary API source)
 CREATE OR REPLACE VIEW v_fleet_live AS
@@ -958,17 +957,17 @@ LEFT JOIN trips tr ON tr.vehicle_id = t.vehicle_id
 GROUP BY DATE_TRUNC('day', t.recorded_at)
 ORDER BY day DESC;
 
--- \echo '    ✓ 6 views created'
+DO $$ BEGIN RAISE NOTICE '    [OK] 6 views created'; END $$;
 
 -- ──────────────────────────────────────────────────────────
 -- 7. TEST DATA
 -- ──────────────────────────────────────────────────────────
 
--- \echo '[7] Inserting test data...'
+DO $$ BEGIN RAISE NOTICE '[7] Inserting test data...'; END $$;
 
 -- ── 7a. Admin users ────────────────────────────────────────
 
--- \echo '    → users...'
+DO $$ BEGIN RAISE NOTICE '    -> users...'; END $$;
 
 INSERT INTO users (email, password_hash, full_name, role, phone) VALUES
 -- password for all demo accounts: 'admin123' (bcrypt hash below)
@@ -979,7 +978,7 @@ INSERT INTO users (email, password_hash, full_name, role, phone) VALUES
 
 -- ── 7b. Depots ─────────────────────────────────────────────
 
--- \echo '    → depots...'
+DO $$ BEGIN RAISE NOTICE '    -> depots...'; END $$;
 
 INSERT INTO depots (name, address, city, location, capacity, manager, phone) VALUES
 ('Raiwind Road Depot',
@@ -1008,7 +1007,7 @@ INSERT INTO depots (name, address, city, location, capacity, manager, phone) VAL
 
 -- ── 7c. Drivers ────────────────────────────────────────────
 
--- \echo '    → drivers...'
+DO $$ BEGIN RAISE NOTICE '    -> drivers...'; END $$;
 
 INSERT INTO drivers (
     employee_id, full_name, phone, email,
@@ -1041,32 +1040,32 @@ FROM (VALUES
 
 -- ── 7d. Vehicles ───────────────────────────────────────────
 
--- \echo '    → vehicles...'
+DO $$ BEGIN RAISE NOTICE '    -> vehicles...'; END $$;
 
 DO $$
 DECLARE
-    depot_ids  UUID[];
-    driver_ids UUID[];
+    v_depot_ids  UUID[];
+    v_driver_ids UUID[];
 
     -- Lahore centre + scatter
-    base_lng   FLOAT := 74.3587;
-    base_lat   FLOAT := 31.5204;
+    v_base_lng   FLOAT := 74.3587;
+    v_base_lat   FLOAT := 31.5204;
 
-    v_id       UUID;
-    d_id       UUID;
-    dep_id     UUID;
-    lng        FLOAT;
-    lat        FLOAT;
-    status     vehicle_status;
-    speed      NUMERIC;
-    fuel       NUMERIC;
-    odo        NUMERIC;
-    heading    NUMERIC;
+    v_vid        UUID;
+    v_d_id       UUID;
+    v_dep_id     UUID;
+    v_lng        FLOAT;
+    v_lat        FLOAT;
+    v_status     vehicle_status;
+    v_speed      NUMERIC;
+    v_fuel       NUMERIC;
+    v_odo        NUMERIC;
+    v_heading    NUMERIC;
 
     v_data RECORD;
 BEGIN
-    SELECT ARRAY(SELECT id FROM depots ORDER BY created_at) INTO depot_ids;
-    SELECT ARRAY(SELECT id FROM drivers WHERE status = 'active' ORDER BY created_at) INTO driver_ids;
+    SELECT ARRAY(SELECT id FROM depots ORDER BY created_at) INTO v_depot_ids;
+    SELECT ARRAY(SELECT id FROM drivers WHERE status = 'active' ORDER BY created_at) INTO v_driver_ids;
 
     FOR v_data IN (
         SELECT * FROM (VALUES
@@ -1091,20 +1090,20 @@ BEGIN
         ) AS t(reg,make,model,yr,vtype,color,mspd,fuel_cap,fuel_eff,odo_base,vstatus,eng,health)
     ) LOOP
         -- Scatter position around Lahore
-        lng := base_lng + (RANDOM() - 0.5) * 0.12;
-        lat := base_lat + (RANDOM() - 0.5) * 0.10;
-        heading := FLOOR(RANDOM() * 360);
-        fuel    := 15 + RANDOM() * 85;
-        speed   := CASE v_data.vstatus WHEN 'active' THEN 20 + RANDOM() * 80 ELSE 0 END;
-        odo     := v_data.odo_base + RANDOM() * 5000;
+        v_lng     := v_base_lng + (RANDOM() - 0.5) * 0.12;
+        v_lat     := v_base_lat + (RANDOM() - 0.5) * 0.10;
+        v_heading := FLOOR(RANDOM() * 360);
+        v_fuel    := 15 + RANDOM() * 85;
+        v_speed   := CASE v_data.vstatus WHEN 'active' THEN 20 + RANDOM() * 80 ELSE 0 END;
+        v_odo     := v_data.odo_base + RANDOM() * 5000;
 
         -- Assign driver (if active)
         IF v_data.vstatus IN ('active','idle') THEN
-            d_id := driver_ids[1 + FLOOR(RANDOM() * array_length(driver_ids, 1))::INT];
+            v_d_id := v_driver_ids[1 + FLOOR(RANDOM() * array_length(v_driver_ids, 1))::INT];
         ELSE
-            d_id := NULL;
+            v_d_id := NULL;
         END IF;
-        dep_id := depot_ids[1 + FLOOR(RANDOM() * array_length(depot_ids, 1))::INT];
+        v_dep_id := v_depot_ids[1 + FLOOR(RANDOM() * array_length(v_depot_ids, 1))::INT];
 
         INSERT INTO vehicles (
             registration, make, model, year, type, color,
@@ -1119,16 +1118,16 @@ BEGIN
             v_data.reg, v_data.make, v_data.model, v_data.yr,
             v_data.vtype::vehicle_type, v_data.color,
             v_data.vstatus::vehicle_status,
-            ST_SetSRID(ST_MakePoint(lng, lat), 4326),
-            ROUND(speed::NUMERIC, 1), heading,
-            ROUND(fuel::NUMERIC, 1),  ROUND(odo::NUMERIC, 0),
+            ST_SetSRID(ST_MakePoint(v_lng, v_lat), 4326),
+            ROUND(v_speed::NUMERIC, 1), v_heading,
+            ROUND(v_fuel::NUMERIC, 1),  ROUND(v_odo::NUMERIC, 0),
             v_data.eng,
             v_data.fuel_cap, v_data.fuel_eff, v_data.mspd,
             v_data.health,
             NOW() - (RANDOM() * INTERVAL '5 minutes'),
-            d_id, dep_id,
+            v_d_id, v_dep_id,
             CURRENT_DATE - (FLOOR(RANDOM() * 365) || ' days')::INTERVAL,
-            odo + 5000 + RANDOM() * 15000,
+            v_odo + 5000 + RANDOM() * 15000,
             CURRENT_DATE + (FLOOR(180 + RANDOM() * 500) || ' days')::INTERVAL,
             CURRENT_DATE + (FLOOR(90 + RANDOM() * 600) || ' days')::INTERVAL
         );
@@ -1137,7 +1136,7 @@ END $$;
 
 -- ── 7e. Geofences ──────────────────────────────────────────
 
--- \echo '    → geofences...'
+DO $$ BEGIN RAISE NOTICE '    -> geofences...'; END $$;
 
 INSERT INTO geofences (name, description, color, zone_type, boundary, speed_limit, alert_on_enter, alert_on_exit)
 VALUES
@@ -1193,18 +1192,18 @@ VALUES
 
 -- ── 7f. Telemetry history (last 2 hours per active vehicle) ─
 
--- \echo '    → telemetry history (2h per vehicle, ~120 points each)...'
+DO $$ BEGIN RAISE NOTICE '    -> telemetry history (2h per vehicle, ~120 points each)...'; END $$;
 
 DO $$
 DECLARE
     v_rec    RECORD;
     i        INTEGER;
-    lng      FLOAT;
-    lat      FLOAT;
-    speed    FLOAT;
-    heading  FLOAT;
-    fuel     FLOAT;
-    rpm      INTEGER;
+    t_lng    FLOAT;
+    t_lat    FLOAT;
+    t_speed  FLOAT;
+    t_head   FLOAT;
+    t_fuel   FLOAT;
+    t_rpm    INTEGER;
 BEGIN
     FOR v_rec IN
         SELECT id,
@@ -1217,20 +1216,20 @@ BEGIN
         WHERE status = 'active'
         ORDER BY registration
     LOOP
-        lng     := v_rec.base_lng;
-        lat     := v_rec.base_lat;
-        heading := v_rec.base_heading;
-        fuel    := v_rec.base_fuel;
+        t_lng  := v_rec.base_lng;
+        t_lat  := v_rec.base_lat;
+        t_head := v_rec.base_heading;
+        t_fuel := v_rec.base_fuel;
 
         -- Walk backwards: i=120 (120 min ago) → i=0 (now)
         FOR i IN REVERSE 120..0 LOOP
-            speed   := GREATEST(0, 20 + RANDOM() * 80 + SIN(i * 0.3) * 20);
+            t_speed := GREATEST(0, 20 + RANDOM() * 80 + SIN(i * 0.3) * 20);
             -- Drift position slightly each minute
-            lng := lng + SIN(RADIANS(heading)) * 0.0001 * (speed / 60);
-            lat := lat + COS(RADIANS(heading)) * 0.0001 * (speed / 60);
-            heading := (heading + (RANDOM() - 0.5) * 10 + 360)::INTEGER % 360;
-            fuel    := GREATEST(5, fuel - (speed / 100) * 0.003);
-            rpm     := (600 + speed * 30 + RANDOM() * 300)::INTEGER;
+            t_lng   := t_lng + SIN(RADIANS(t_head)) * 0.0001 * (t_speed / 60);
+            t_lat   := t_lat + COS(RADIANS(t_head)) * 0.0001 * (t_speed / 60);
+            t_head  := (t_head + (RANDOM() - 0.5) * 10 + 360)::INTEGER % 360;
+            t_fuel  := GREATEST(5, t_fuel - (t_speed / 100) * 0.003);
+            t_rpm   := (600 + t_speed * 30 + RANDOM() * 300)::INTEGER;
 
             INSERT INTO telemetry (
                 vehicle_id, recorded_at,
@@ -1240,13 +1239,13 @@ BEGIN
             ) VALUES (
                 v_rec.id,
                 NOW() - (i || ' minutes')::INTERVAL,
-                ST_SetSRID(ST_MakePoint(lng, lat), 4326),
-                ROUND(speed::NUMERIC, 1),
-                ROUND(heading::NUMERIC, 0),
-                ROUND(fuel::NUMERIC, 1),
-                v_rec.base_odo + (120 - i) * speed / 60,
+                ST_SetSRID(ST_MakePoint(t_lng, t_lat), 4326),
+                ROUND(t_speed::NUMERIC, 1),
+                ROUND(t_head::NUMERIC, 0),
+                ROUND(t_fuel::NUMERIC, 1),
+                v_rec.base_odo + (120 - i) * t_speed / 60,
                 TRUE,
-                rpm,
+                t_rpm,
                 75 + RANDOM() * 25,      -- engine temp 75-100°C
                 12.2 + RANDOM() * 0.8,   -- battery 12.2-13.0V
                 (8 + RANDOM() * 4)::INT  -- 8-12 GPS satellites
@@ -1257,21 +1256,21 @@ END $$;
 
 -- ── 7g. Completed trips ────────────────────────────────────
 
--- \echo '    → trips...'
+DO $$ BEGIN RAISE NOTICE '    -> trips...'; END $$;
 
 DO $$
 DECLARE
-    v_ids   UUID[];
-    d_ids   UUID[];
-    v_id    UUID;
-    d_id    UUID;
-    o_lng   FLOAT; o_lat FLOAT;
+    v_ids    UUID[];
+    d_ids    UUID[];
+    v_id     UUID;
+    d_id     UUID;
+    o_lng    FLOAT; o_lat FLOAT;
     dest_lng FLOAT; dest_lat FLOAT;
-    started  TIMESTAMPTZ;
-    ended    TIMESTAMPTZ;
-    dist     NUMERIC;
-    dur      INTEGER;
-    i        INTEGER;
+    tr_started TIMESTAMPTZ;
+    tr_ended   TIMESTAMPTZ;
+    tr_dist    NUMERIC;
+    tr_dur     INTEGER;
+    i          INTEGER;
 BEGIN
     SELECT ARRAY(SELECT id FROM vehicles WHERE status IN ('active','idle') ORDER BY registration) INTO v_ids;
     SELECT ARRAY(SELECT id FROM drivers WHERE status = 'active' ORDER BY created_at)              INTO d_ids;
@@ -1284,10 +1283,10 @@ BEGIN
         o_lat    := 31.45 + RANDOM() * 0.12;
         dest_lng := 74.28 + RANDOM() * 0.20;
         dest_lat := 31.45 + RANDOM() * 0.12;
-        started  := NOW() - (FLOOR(RANDOM() * 10080) || ' minutes')::INTERVAL;  -- last 7 days
-        dist     := 5 + RANDOM() * 60;
-        dur      := (dist / (30 + RANDOM() * 40) * 60)::INT;
-        ended    := started + (dur || ' minutes')::INTERVAL;
+        tr_started := NOW() - (FLOOR(RANDOM() * 10080) || ' minutes')::INTERVAL;  -- last 7 days
+        tr_dist  := 5 + RANDOM() * 60;
+        tr_dur   := (tr_dist / (30 + RANDOM() * 40) * 60)::INT;
+        tr_ended := tr_started + (tr_dur || ' minutes')::INTERVAL;
 
         INSERT INTO trips (
             vehicle_id, driver_id, status,
@@ -1303,24 +1302,24 @@ BEGIN
             v_id, d_id, 'completed',
             ST_SetSRID(ST_MakePoint(o_lng, o_lat), 4326),
             ST_SetSRID(ST_MakePoint(dest_lng, dest_lat), 4326),
-            ST_SetSRID(ST_MakeLine(
-                ST_MakePoint(o_lng, o_lat),
-                ST_MakePoint((o_lng+dest_lng)/2 + (RANDOM()-0.5)*0.02,
-                             (o_lat+dest_lat)/2 + (RANDOM()-0.5)*0.02),
-                ST_MakePoint(dest_lng, dest_lat)
-            ), 4326),
+            ST_MakeLine(ARRAY[
+                ST_SetSRID(ST_MakePoint(o_lng, o_lat), 4326),
+                ST_SetSRID(ST_MakePoint((o_lng+dest_lng)/2 + (RANDOM()-0.5)*0.02,
+                                        (o_lat+dest_lat)/2 + (RANDOM()-0.5)*0.02), 4326),
+                ST_SetSRID(ST_MakePoint(dest_lng, dest_lat), 4326)
+            ]),
             'Origin, Lahore',
             'Destination, Lahore',
-            started, ended,
-            started - INTERVAL '10 minutes', ended + INTERVAL '5 minutes',
-            ROUND(dist::NUMERIC, 2),
-            dur,
-            ROUND((dist / (dur / 60.0))::NUMERIC, 1),
+            tr_started, tr_ended,
+            tr_started - INTERVAL '10 minutes', tr_ended + INTERVAL '5 minutes',
+            ROUND(tr_dist::NUMERIC, 2),
+            tr_dur,
+            ROUND((tr_dist / (tr_dur / 60.0))::NUMERIC, 1),
             ROUND((50 + RANDOM() * 70)::NUMERIC, 1),
-            ROUND((dist * 0.10)::NUMERIC, 2),
+            ROUND((tr_dist * 0.10)::NUMERIC, 2),
             FLOOR(RANDOM() * 20)::INT,
             FLOOR(RANDOM() * 4)::INT,
-            ROUND((dist * 0.10 * 2.68)::NUMERIC, 2),  -- CO₂: diesel ~2.68 kg/L
+            ROUND((tr_dist * 0.10 * 2.68)::NUMERIC, 2),  -- CO₂: diesel ~2.68 kg/L
             500 + FLOOR(RANDOM() * 4500)::INT
         );
     END LOOP;
@@ -1352,7 +1351,7 @@ END $$;
 
 -- ── 7h. Alerts (last 7 days) ───────────────────────────────
 
--- \echo '    → alerts...'
+DO $$ BEGIN RAISE NOTICE '    -> alerts...'; END $$;
 
 DO $$
 DECLARE
@@ -1362,9 +1361,10 @@ DECLARE
     v_id   UUID;
     d_id   UUID;
     g_id   UUID;
-    lng    FLOAT;
-    lat    FLOAT;
-    mins   INTEGER;
+    a_lng  FLOAT;
+    a_lat  FLOAT;
+    a_mins INTEGER;
+    i      INTEGER;
 BEGIN
     SELECT ARRAY(SELECT id FROM vehicles ORDER BY registration)     INTO v_ids;
     SELECT ARRAY(SELECT id FROM drivers  WHERE status = 'active')   INTO d_ids;
@@ -1372,11 +1372,11 @@ BEGIN
 
     -- 80 realistic alerts spread over last 7 days
     FOR i IN 1..80 LOOP
-        v_id := v_ids[1 + FLOOR(RANDOM() * array_length(v_ids,1))::INT];
-        d_id := d_ids[1 + FLOOR(RANDOM() * array_length(d_ids,1))::INT];
-        lng  := 74.28 + RANDOM() * 0.20;
-        lat  := 31.45 + RANDOM() * 0.12;
-        mins := FLOOR(RANDOM() * 10080);  -- random minute in last 7 days
+        v_id  := v_ids[1 + FLOOR(RANDOM() * array_length(v_ids,1))::INT];
+        d_id  := d_ids[1 + FLOOR(RANDOM() * array_length(d_ids,1))::INT];
+        a_lng := 74.28 + RANDOM() * 0.20;
+        a_lat := 31.45 + RANDOM() * 0.12;
+        a_mins := FLOOR(RANDOM() * 10080);  -- random minute in last 7 days
 
         CASE FLOOR(RANDOM() * 8)::INT
             WHEN 0 THEN
@@ -1384,9 +1384,9 @@ BEGIN
                 VALUES (v_id, d_id, 'speeding', 'critical',
                     'Speed Limit Exceeded',
                     FORMAT('Vehicle exceeded limit at %s km/h in 80 km/h zone', FLOOR(85 + RANDOM()*35)::INT),
-                    ST_SetSRID(ST_MakePoint(lng, lat), 4326),
+                    ST_SetSRID(ST_MakePoint(a_lng, a_lat), 4326),
                     FLOOR(85 + RANDOM()*35)::NUMERIC,
-                    NOW() - (mins || ' minutes')::INTERVAL,
+                    NOW() - (a_mins || ' minutes')::INTERVAL,
                     RANDOM() > 0.3);
             WHEN 1 THEN
                 g_id := g_ids[1 + FLOOR(RANDOM() * array_length(g_ids,1))::INT];
@@ -1394,8 +1394,8 @@ BEGIN
                 VALUES (v_id, d_id, g_id, 'geofence_exit', 'info',
                     'Geofence Zone Exit',
                     'Vehicle exited authorised delivery zone',
-                    ST_SetSRID(ST_MakePoint(lng, lat), 4326),
-                    NOW() - (mins || ' minutes')::INTERVAL,
+                    ST_SetSRID(ST_MakePoint(a_lng, a_lat), 4326),
+                    NOW() - (a_mins || ' minutes')::INTERVAL,
                     RANDOM() > 0.5);
             WHEN 2 THEN
                 g_id := g_ids[1 + FLOOR(RANDOM() * array_length(g_ids,1))::INT];
@@ -1403,49 +1403,49 @@ BEGIN
                 VALUES (v_id, d_id, g_id, 'geofence_enter', 'warning',
                     'Restricted Zone Entry',
                     'Vehicle entered restricted geofence area',
-                    ST_SetSRID(ST_MakePoint(lng, lat), 4326),
-                    NOW() - (mins || ' minutes')::INTERVAL,
+                    ST_SetSRID(ST_MakePoint(a_lng, a_lat), 4326),
+                    NOW() - (a_mins || ' minutes')::INTERVAL,
                     RANDOM() > 0.4);
             WHEN 3 THEN
                 INSERT INTO alerts (vehicle_id, driver_id, type, severity, title, message, location, speed, occurred_at, is_read)
                 VALUES (v_id, d_id, 'harsh_braking', 'warning',
                     'Harsh Braking Event',
                     FORMAT('Sudden deceleration from %s km/h detected', FLOOR(50+RANDOM()*50)::INT),
-                    ST_SetSRID(ST_MakePoint(lng, lat), 4326),
+                    ST_SetSRID(ST_MakePoint(a_lng, a_lat), 4326),
                     FLOOR(50 + RANDOM()*50)::NUMERIC,
-                    NOW() - (mins || ' minutes')::INTERVAL,
+                    NOW() - (a_mins || ' minutes')::INTERVAL,
                     RANDOM() > 0.4);
             WHEN 4 THEN
                 INSERT INTO alerts (vehicle_id, driver_id, type, severity, title, message, location, occurred_at, is_read)
                 VALUES (v_id, d_id, 'low_fuel', 'warning',
                     'Low Fuel Warning',
                     FORMAT('Fuel level at %s%% — refuel required', FLOOR(5+RANDOM()*12)::INT),
-                    ST_SetSRID(ST_MakePoint(lng, lat), 4326),
-                    NOW() - (mins || ' minutes')::INTERVAL,
+                    ST_SetSRID(ST_MakePoint(a_lng, a_lat), 4326),
+                    NOW() - (a_mins || ' minutes')::INTERVAL,
                     RANDOM() > 0.2);
             WHEN 5 THEN
                 INSERT INTO alerts (vehicle_id, driver_id, type, severity, title, message, location, occurred_at, is_read)
                 VALUES (v_id, d_id, 'idle_timeout', 'info',
                     'Extended Idle Detected',
                     FORMAT('Vehicle idling for %s minutes in non-depot zone', FLOOR(20+RANDOM()*40)::INT),
-                    ST_SetSRID(ST_MakePoint(lng, lat), 4326),
-                    NOW() - (mins || ' minutes')::INTERVAL,
+                    ST_SetSRID(ST_MakePoint(a_lng, a_lat), 4326),
+                    NOW() - (a_mins || ' minutes')::INTERVAL,
                     RANDOM() > 0.6);
             WHEN 6 THEN
                 INSERT INTO alerts (vehicle_id, driver_id, type, severity, title, message, location, occurred_at, is_read)
                 VALUES (v_id, d_id, 'harsh_acceleration', 'warning',
                     'Harsh Acceleration',
                     'Aggressive throttle event recorded',
-                    ST_SetSRID(ST_MakePoint(lng, lat), 4326),
-                    NOW() - (mins || ' minutes')::INTERVAL,
+                    ST_SetSRID(ST_MakePoint(a_lng, a_lat), 4326),
+                    NOW() - (a_mins || ' minutes')::INTERVAL,
                     RANDOM() > 0.3);
             ELSE
                 INSERT INTO alerts (vehicle_id, driver_id, type, severity, title, message, location, occurred_at, is_read)
                 VALUES (v_id, d_id, 'offline', 'critical',
                     'Vehicle Signal Lost',
                     'GPS signal lost for more than 10 minutes',
-                    ST_SetSRID(ST_MakePoint(lng, lat), 4326),
-                    NOW() - (mins || ' minutes')::INTERVAL,
+                    ST_SetSRID(ST_MakePoint(a_lng, a_lat), 4326),
+                    NOW() - (a_mins || ' minutes')::INTERVAL,
                     RANDOM() > 0.1);
         END CASE;
     END LOOP;
@@ -1466,7 +1466,7 @@ END $$;
 
 -- ── 7i. Maintenance records ────────────────────────────────
 
--- \echo '    → maintenance records...'
+DO $$ BEGIN RAISE NOTICE '    -> maintenance records...'; END $$;
 
 DO $$
 DECLARE
@@ -1494,7 +1494,7 @@ BEGIN
         1500 + FLOOR(RANDOM()*6000)::NUMERIC,
         (ARRAY['Arif Hussain','Tariq Motors','Ali Autos','FastFix Workshop'])[FLOOR(1+RANDOM()*4)::INT],
         (ARRAY['Gulberg Auto','DHA Workshop','Raiwind Service Center'])[FLOOR(1+RANDOM()*3)::INT],
-        FORMAT('INV-%05d', FLOOR(10000+RANDOM()*90000)::INT),
+        'INV-' || LPAD(FLOOR(10000+RANDOM()*90000)::TEXT, 5, '0'),
         RANDOM() > 0.8
     FROM generate_series(1, 25);
 
@@ -1521,35 +1521,35 @@ END $$;
 
 -- ── 7j. Driver safety scores (last 30 days) ───────────────
 
--- \echo '    → driver safety scores...'
+DO $$ BEGIN RAISE NOTICE '    -> driver safety scores...'; END $$;
 
 DO $$
 DECLARE
-    d_rec  RECORD;
-    day    DATE;
-    base   NUMERIC;
-    score  NUMERIC;
-    spd    INTEGER;
-    brk    INTEGER;
-    acc    INTEGER;
+    d_rec    RECORD;
+    ds_day   DATE;
+    ds_base  NUMERIC;
+    ds_score NUMERIC;
+    ds_spd   INTEGER;
+    ds_brk   INTEGER;
+    ds_acc   INTEGER;
 BEGIN
     FOR d_rec IN SELECT id, safety_score FROM drivers WHERE status = 'active' LOOP
-        base := d_rec.safety_score;
-        FOR day IN
+        ds_base := d_rec.safety_score;
+        FOR ds_day IN
             SELECT generate_series::DATE
             FROM generate_series(CURRENT_DATE - 29, CURRENT_DATE, '1 day')
         LOOP
             -- Vary score ±8 around base with slight daily randomness
-            score := GREATEST(0, LEAST(100,
-                base + (RANDOM() - 0.5) * 16
-                     + SIN(EXTRACT(DOW FROM day)) * 3
+            ds_score := GREATEST(0, LEAST(100,
+                ds_base + (RANDOM() - 0.5) * 16
+                        + SIN(EXTRACT(DOW FROM ds_day)) * 3
             ));
-            spd := CASE WHEN base < 70 THEN FLOOR(RANDOM()*4)::INT
-                        WHEN base < 85 THEN FLOOR(RANDOM()*2)::INT
-                        ELSE 0 END;
-            brk := CASE WHEN base < 75 THEN FLOOR(RANDOM()*3)::INT
-                        ELSE FLOOR(RANDOM()*1.5)::INT END;
-            acc := FLOOR(RANDOM() * 2)::INT;
+            ds_spd := CASE WHEN ds_base < 70 THEN FLOOR(RANDOM()*4)::INT
+                            WHEN ds_base < 85 THEN FLOOR(RANDOM()*2)::INT
+                            ELSE 0 END;
+            ds_brk := CASE WHEN ds_base < 75 THEN FLOOR(RANDOM()*3)::INT
+                            ELSE FLOOR(RANDOM()*1.5)::INT END;
+            ds_acc := FLOOR(RANDOM() * 2)::INT;
 
             INSERT INTO driver_scores (
                 driver_id, period_date, period_type,
@@ -1558,14 +1558,14 @@ BEGIN
                 speeding_events, harsh_braking, harsh_acceleration,
                 distance_km, driving_hours
             ) VALUES (
-                d_rec.id, day, 'daily',
-                ROUND(score, 2),
-                ROUND(LEAST(100, score + (RANDOM()-0.5)*10), 2),
-                ROUND(LEAST(100, score + (RANDOM()-0.5)*8), 2),
-                ROUND(LEAST(100, score + (RANDOM()-0.5)*8), 2),
-                ROUND(LEAST(100, score + (RANDOM()-0.5)*6), 2),
-                ROUND(LEAST(100, score + (RANDOM()-0.5)*6), 2),
-                spd, brk, acc,
+                d_rec.id, ds_day, 'daily',
+                ROUND(ds_score::NUMERIC, 2),
+                ROUND(LEAST(100, ds_score + (RANDOM()-0.5)*10)::NUMERIC, 2),
+                ROUND(LEAST(100, ds_score + (RANDOM()-0.5)*8)::NUMERIC, 2),
+                ROUND(LEAST(100, ds_score + (RANDOM()-0.5)*8)::NUMERIC, 2),
+                ROUND(LEAST(100, ds_score + (RANDOM()-0.5)*6)::NUMERIC, 2),
+                ROUND(LEAST(100, ds_score + (RANDOM()-0.5)*6)::NUMERIC, 2),
+                ds_spd, ds_brk, ds_acc,
                 ROUND((80 + RANDOM()*200)::NUMERIC, 2),
                 ROUND((2 + RANDOM()*8)::NUMERIC, 2)
             )
@@ -1574,14 +1574,14 @@ BEGIN
     END LOOP;
 END $$;
 
--- \echo '    ✓ All test data inserted'
+DO $$ BEGIN RAISE NOTICE '    [OK] All test data inserted'; END $$;
 
 -- ──────────────────────────────────────────────────────────
 -- 8. ROW COUNTS & VERIFICATION
 -- ──────────────────────────────────────────────────────────
 
--- \echo ''
--- \echo '[8] Verification — row counts:'
+
+DO $$ BEGIN RAISE NOTICE '[8] Verification - row counts:'; END $$;
 
 SELECT
     'users'          AS table_name, COUNT(*) AS rows FROM users        UNION ALL
@@ -1596,8 +1596,8 @@ SELECT 'maintenance',                                 COUNT(*)          FROM mai
 SELECT 'driver_scores',                               COUNT(*)          FROM driver_scores
 ORDER BY 1;
 
--- \echo ''
--- \echo '[8] Spatial index verification:'
+
+DO $$ BEGIN RAISE NOTICE '[8] Spatial index verification:'; END $$;
 
 SELECT
     schemaname,
@@ -1609,13 +1609,13 @@ WHERE indexdef ILIKE '%gist%'
   AND tablename IN ('vehicles','telemetry','trips','geofences','alerts','depots')
 ORDER BY tablename, indexname;
 
--- \echo ''
--- \echo '[8] Fleet KPI snapshot:'
+
+DO $$ BEGIN RAISE NOTICE '[8] Fleet KPI snapshot:'; END $$;
 
 SELECT * FROM fleet_kpi_snapshot();
 
--- \echo ''
--- \echo '[8] Vehicle status breakdown:'
+
+DO $$ BEGIN RAISE NOTICE '[8] Vehicle status breakdown:'; END $$;
 
 SELECT status, COUNT(*) AS count,
        ROUND(AVG(current_speed),1)   AS avg_speed,
@@ -1625,16 +1625,16 @@ FROM vehicles
 GROUP BY status
 ORDER BY count DESC;
 
--- \echo ''
--- \echo '[8] Driver leaderboard (top 5):'
+
+DO $$ BEGIN RAISE NOTICE '[8] Driver leaderboard (top 5):'; END $$;
 
 SELECT rank, full_name, current_score, vehicle_reg, vehicle_status
 FROM v_driver_leaderboard
 ORDER BY rank
 LIMIT 5;
 
--- \echo ''
--- \echo '[8] Geofence vehicle containment (PostGIS ST_Within):'
+
+DO $$ BEGIN RAISE NOTICE '[8] Geofence vehicle containment (PostGIS ST_Within):'; END $$;
 
 SELECT
     g.name                   AS geofence,
@@ -1647,8 +1647,8 @@ LEFT JOIN vehicles v
 GROUP BY g.name, g.zone_type
 ORDER BY vehicles_inside DESC;
 
--- \echo ''
--- \echo '[8] Recent vehicle trails (PostGIS ST_MakeLine):'
+
+DO $$ BEGIN RAISE NOTICE '[8] Recent vehicle trails (PostGIS ST_MakeLine):'; END $$;
 
 SELECT
     v.registration,
@@ -1666,8 +1666,8 @@ HAVING COUNT(t.id) > 5
 ORDER BY trail_km DESC
 LIMIT 8;
 
--- \echo ''
--- \echo '[8] Alert heatmap sample (ST_SnapToGrid):'
+
+DO $$ BEGIN RAISE NOTICE '[8] Alert heatmap sample (ST_SnapToGrid):'; END $$;
 
 SELECT
     ROUND(ST_X(ST_SnapToGrid(location, 0.01))::NUMERIC, 3) AS grid_lng,
@@ -1680,16 +1680,16 @@ GROUP BY ST_SnapToGrid(location, 0.01)
 ORDER BY alert_count DESC
 LIMIT 8;
 
--- \echo ''
--- \echo '[8] Vehicles near Gulberg (ST_DWithin, radius=3km):'
+
+DO $$ BEGIN RAISE NOTICE '[8] Vehicles near Gulberg (ST_DWithin, radius=3km):'; END $$;
 
 SELECT registration, vehicle_name, status, driver_name,
        ROUND(distance_m::NUMERIC) AS dist_m
 FROM vehicles_near_point(74.345, 31.512, 3000)
 LIMIT 6;
 
--- \echo ''
--- \echo '[8] Upcoming maintenance (AI-predicted first):'
+
+DO $$ BEGIN RAISE NOTICE '[8] Upcoming maintenance (AI-predicted first):'; END $$;
 
 SELECT
     v.registration,
@@ -1709,18 +1709,18 @@ LIMIT 10;
 -- DONE
 -- ──────────────────────────────────────────────────────────
 
--- \echo ''
--- \echo '══════════════════════════════════════════════════════'
--- \echo '  ✓ CloudNext Fleet DB bootstrap complete!'
--- \echo ''
--- \echo '  Login credentials:'
--- \echo '    admin@cloudnext.com     / admin123'
--- \echo '    operator@cloudnext.com  / admin123'
--- \echo '    viewer@cloudnext.com    / admin123'
--- \echo ''
--- \echo '  Quick API test:'
--- \echo '    curl -s -X POST http://localhost:3001/api/auth/login \'
--- \echo '      -H "Content-Type: application/json" \'
--- \echo '      -d "{\"email\":\"admin@cloudnext.com\",\"password\":\"admin123\"}"'
--- \echo '══════════════════════════════════════════════════════'
--- \echo ''
+
+DO $$ BEGIN RAISE NOTICE '======================================================'; END $$;
+DO $$ BEGIN RAISE NOTICE '  [OK] CloudNext Fleet DB bootstrap complete!'; END $$;
+
+DO $$ BEGIN RAISE NOTICE '  Login credentials:'; END $$;
+DO $$ BEGIN RAISE NOTICE '    admin@cloudnext.com     / admin123'; END $$;
+DO $$ BEGIN RAISE NOTICE '    operator@cloudnext.com  / admin123'; END $$;
+DO $$ BEGIN RAISE NOTICE '    viewer@cloudnext.com    / admin123'; END $$;
+
+DO $$ BEGIN RAISE NOTICE '  Quick API test:'; END $$;
+DO $$ BEGIN RAISE NOTICE '    curl -s -X POST http://localhost:3001/api/auth/login \'; END $$;
+DO $$ BEGIN RAISE NOTICE '      -H "Content-Type: application/json" \'; END $$;
+DO $$ BEGIN RAISE NOTICE '      -d "{\"email\":\"admin@cloudnext.com\",\"password\":\"admin123\"}"'; END $$;
+DO $$ BEGIN RAISE NOTICE '======================================================'; END $$;
+
