@@ -1,9 +1,27 @@
 import { create } from 'zustand';
 import api from '../services/api';
 
-interface User { id: string; email: string; role: string; name: string; }
+export interface TenantInfo {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  max_vehicles: number;
+  max_users: number;
+  settings?: Record<string, any>;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: string;
+  name: string;
+  tenant_id: string | null;
+  tenant: TenantInfo | null;
+}
+
 interface AuthStore {
-  user: User | null;
+  user: AuthUser | null;
   token: string | null;
   isLoading: boolean;
   error: string | null;

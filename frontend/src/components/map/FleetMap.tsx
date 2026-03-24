@@ -162,7 +162,9 @@ export default function FleetMap() {
       pickable: true,
       autoHighlight: true,
       highlightColor: [255, 255, 255, 60],
-      onClick: ({ object }: { object: Vehicle }) => { if (object) selectVehicle(object.id); },
+      onClick: ({ object }: { object?: Vehicle }) => {
+        if (object) selectVehicle(object.id);
+      },
     }));
 
     // 8. Selected vehicle ring
@@ -247,7 +249,7 @@ export default function FleetMap() {
         controller={{ dragRotate: true, touchRotate: true }}
         layers={layers}
         getTooltip={getTooltip}
-        style={{ position: 'absolute', inset: 0 }}
+        style={{ position: 'absolute', inset: '0' }}
       >
         <Map
           reuseMaps

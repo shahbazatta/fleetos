@@ -57,6 +57,16 @@
 │  ST_AsGeoJSON()  ST_Distance()  ST_SnapToGrid()           │
 └─────────────────────────────────────────────────────────┘
 ```
+### Role permissions within a tenant:
+Action									Viewer	Operator	Admin	Superadmin
+View map, alerts, reports				✓		✓			✓		✓
+Assign/unassign drivers to vehicles		✗		✓			✓		✓
+Create/edit vehicles, geofences, depots	✗		✗			✓		✓
+Create/manage portal users				✗		✗			✓		✓
+Create/manage tenants					✗		✗			✗		✓
+Cross-tenant data access				✗		✗			✗		✓
+
+Superadmin sees a "Tenants" button in the navbar → full tenant management page with cards showing user/vehicle/driver counts, plan badges, suspend/activate toggle, and a create/edit modal with plan and limits configuration.
 
 ---
 

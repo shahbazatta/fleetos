@@ -2,6 +2,9 @@ import React from 'react';
 import { useFleetStore } from '../../store/fleetStore';
 import { scoreColor, STATUS_COLOR } from '../../utils/colors';
 
+// Optional: Define a type for better safety (add this at the top if you want)
+type VehicleStatus = keyof typeof STATUS_COLOR | string | null;
+
 function ScoreBar({ score }: { score: number }) {
   const color = scoreColor(score);
   return (
@@ -33,6 +36,7 @@ export default function DriversTable() {
         {sorted.map((d, idx) => {
           const score = d.current_score || d.safety_score;
           const rankColor = idx === 0 ? '#f59e0b' : idx === 1 ? '#94a3b8' : idx === 2 ? '#b45309' : '#3a5070';
+
           return (
             <div key={d.id} style={{
               padding: '10px 12px', marginBottom: 3, borderRadius: 8,
@@ -52,7 +56,7 @@ export default function DriversTable() {
                 fontSize: 12, fontWeight: 700, color: '#00d4e8', fontFamily: 'DM Sans, sans-serif',
                 flexShrink: 0,
               }}>
-                {d.full_name.split(' ').map(n => n[0]).join('').slice(0,2)}
+                {d.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </div>
 
               {/* Info + bar */}
@@ -67,10 +71,8 @@ export default function DriversTable() {
                     </span>
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <ScoreBar score={score} />
-                </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+
+                                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                   <span style={{
                     fontSize: 9, padding: '1px 6px', borderRadius: 3,
                     background: d.status === 'active' ? 'rgba(34,197,94,.15)' : 'rgba(100,116,139,.15)',
@@ -79,15 +81,24 @@ export default function DriversTable() {
                   }}>
                     {d.status}
                   </span>
-                  {d.vehicle_status && (
-                    <span style={{
-                      fontSize: 9, padding: '1px 6px', borderRadius: 3,
-                      background: `${STATUS_COLOR[d.vehicle_status as any] || '#64748b'}22`,
-                      color: STATUS_COLOR[d.vehicle_status as any] || '#64748b',
-                      fontFamily: 'DM Sans, sans-serif', fontWeight: 600,
-                    }}>
-                      Vehicle: {d.vehicle_status}
-                    </span>
+
+                  {/* Vehicle Status */}
+                  {('vehicle_status' in d && d.vehicle_status != null) && (
+                    <div
+                      style={{
+                        backgroundColor: `${
+                          STATUS_COLOR[d.vehicle_status as keyof typeof STATUS_COLOR] || '#64748b'
+                        }22`,
+                        color: STATUS_COLOR[d.vehicle_status as keyof typeof STATUS_COLOR] || '#64748b',
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        display: 'inline-block',
+                      }}
+                    >
+                      Vehicle: {String(d.vehicle_status)}
+                    </div>
                   )}
                 </div>
               </div>
