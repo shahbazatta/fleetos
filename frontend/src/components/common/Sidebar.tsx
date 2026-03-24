@@ -1,42 +1,33 @@
 import React from 'react';
-import { Truck, Bell, Users, BarChart2, UserCog } from 'lucide-react';
+import { Truck, Bell, Users, BarChart2 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
-import { useAuthStore } from '../../store/authStore';
 import VehicleList from '../vehicles/VehicleList';
 import VehicleDetail from '../vehicles/VehicleDetail';
 import AlertsFeed from '../alerts/AlertsFeed';
 import DriversTable from '../drivers/DriversTable';
 import AnalyticsPanel from '../dashboard/AnalyticsPanel';
-import UsersPage from '../users/UsersPage';
 
-export type SidebarTab = 'vehicles' | 'alerts' | 'drivers' | 'analytics' | 'users';
+const TABS = [
+  { id: 'vehicles'  as const, icon: <Truck size={16} />,     label: 'Fleet' },
+  { id: 'alerts'    as const, icon: <Bell size={16} />,      label: 'Alerts' },
+  { id: 'drivers'   as const, icon: <Users size={16} />,     label: 'Drivers' },
+  { id: 'analytics' as const, icon: <BarChart2 size={16} />, label: 'Analytics' },
+];
 
 export default function Sidebar() {
   const { sidebarTab, setSidebarTab, selectedVehicleId, selectVehicle, alerts } = useFleetStore();
-  const { user } = useAuthStore();
-
   const unreadCount = alerts.filter(a => !a.is_read).length;
-  const canManageUsers = user?.role === 'admin' || user?.role === 'superadmin';
-
-  const tabs: { id: SidebarTab; icon: React.ReactNode; label: string; badge?: number; adminOnly?: boolean }[] = [
-    { id: 'vehicles',   icon: <Truck size={16} />,    label: 'Fleet' },
-    { id: 'alerts',     icon: <Bell size={16} />,     label: 'Alerts', badge: unreadCount },
-    { id: 'drivers',    icon: <Users size={16} />,    label: 'Drivers' },
-    { id: 'analytics',  icon: <BarChart2 size={16} />, label: 'Analytics' },
-    { id: 'users',      icon: <UserCog size={16} />,  label: 'Users', adminOnly: true },
-  ].filter(t => !t.adminOnly || canManageUsers);
 
   return (
     <div style={{
       width: 340, height: '100%', display: 'flex', flexDirection: 'column',
       background: '#0a1828',
       borderRight: '1px solid rgba(0,212,232,.1)',
-      flexShrink: 0,
-      zIndex: 20,
+      flexShrink: 0, zIndex: 20,
     }}>
       {/* Tab bar */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(0,212,232,.1)', flexShrink: 0 }}>
-        {tabs.map(t => (
+        {TABS.map(t => (
           <button
             key={t.id}
             onClick={() => { setSidebarTab(t.id); if (t.id !== 'vehicles') selectVehicle(null); }}
@@ -53,15 +44,15 @@ export default function Sidebar() {
           >
             {t.icon}
             {t.label}
-            {t.badge ? (
+            {t.id === 'alerts' && unreadCount > 0 && (
               <span style={{
                 position: 'absolute', top: 6, right: '50%', transform: 'translateX(10px)',
                 background: '#ef4444', color: '#fff', borderRadius: 10,
                 fontSize: 9, padding: '1px 5px', fontWeight: 700, lineHeight: 1.4,
               }}>
-                {t.badge > 99 ? '99+' : t.badge}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </span>
-            ) : null}
+            )}
           </button>
         ))}
       </div>
@@ -73,9 +64,7 @@ export default function Sidebar() {
           : sidebarTab === 'vehicles'   ? <VehicleList />
           : sidebarTab === 'alerts'     ? <AlertsFeed />
           : sidebarTab === 'drivers'    ? <DriversTable />
-          : sidebarTab === 'analytics'  ? <AnalyticsPanel />
-          : sidebarTab === 'users'      ? <UsersPage />
-          : null
+          : <AnalyticsPanel />
         }
       </div>
     </div>
