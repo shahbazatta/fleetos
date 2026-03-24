@@ -1,6 +1,7 @@
 {
-  "name": "fleet-frontend",
-  "version": "1.0.0",
+  "name": "FleetOS",
+  "version": "3.8.1",
+  "homepage": "https://fleet.cloudnext.solutions",
   "private": true,
   "scripts": {
     "dev": "vite",
