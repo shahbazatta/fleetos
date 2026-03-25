@@ -141,14 +141,14 @@ export default function Navbar() {
       {/* KPI strip — dashboard only */}
       {onDashboard ? (
         <div style={{ display: 'flex', alignItems: 'center', flex: 1, overflow: 'hidden' }}>
-          {kpi(v?.total, 'Total')}
-          {kpi(v?.active, 'Active', '#22c55e')}
-          {kpi(v?.idle, 'Idle', '#f59e0b')}
-          {kpi(v?.offline, 'Offline', '#64748b')}
-          {kpi(v?.avg_speed ? `${v.avg_speed}` : '—', 'Avg km/h', colors.cyan)}
-          {kpi(v?.avg_fuel ? `${v.avg_fuel}%` : '—', 'Avg Fuel')}
-          {kpi(a?.critical ?? 0, 'Critical', a?.critical ? '#ef4444' : colors.text)}
-          {kpi(a?.unread ?? 0, 'Unread', a?.unread ? '#f59e0b' : colors.text)}
+          {kpi(v?.total, t('kpi.total'))}
+          {kpi(v?.active, t('kpi.active'), '#22c55e')}
+          {kpi(v?.idle, t('kpi.idle'), '#f59e0b')}
+          {kpi(v?.offline, t('kpi.offline'), '#64748b')}
+          {kpi(v?.avg_speed ? `${v.avg_speed}` : '—', t('kpi.avg_speed'), colors.cyan)}
+          {kpi(v?.avg_fuel ? `${v.avg_fuel}%` : '—', t('kpi.avg_fuel'))}
+          {kpi(a?.critical ?? 0, t('kpi.critical'), a?.critical ? '#ef4444' : colors.text)}
+          {kpi(a?.unread ?? 0, t('kpi.unread'), a?.unread ? '#f59e0b' : colors.text)}
         </div>
       ) : (
         <div style={{ flex: 1, padding: '0 16px' }}>
@@ -167,12 +167,12 @@ export default function Navbar() {
               <div style={{ ...iconBtnStyle, borderColor: tenantFilter ? 'rgba(245,158,11,.5)' : undefined, color: tenantFilter ? '#f59e0b' : colors.muted }}>
                 <Filter size={13} />
                 <span style={{ fontSize: 11, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {tenantFilter ? (tenants.find(t => t.id === tenantFilter)?.name ?? 'Tenant') : 'All Tenants'}
+                  {tenantFilter ? (tenants.find(t => t.id === tenantFilter)?.name ?? 'Tenant') : t('common.all_tenants')}
                 </span>
               </div>
             }>
-              <div style={{ padding: '6px 14px 4px', fontSize: 10, color: '#3a5070', letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif' }}>Filter by Tenant</div>
-              <DropItem label="All Tenants" active={!tenantFilter} onClick={() => setTenantFilter(null)} />
+              <div style={{ padding: '6px 14px 4px', fontSize: 10, color: '#3a5070', letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif' }}>{t('common.filter_by_tenant')}</div>
+              <DropItem label={t('common.all_tenants')} active={!tenantFilter} onClick={() => setTenantFilter(null)} />
               {tenants.filter(t => t.is_active).map(tenant => (
                 <DropItem key={tenant.id} label={tenant.name} active={tenantFilter === tenant.id} onClick={() => setTenantFilter(tenant.id)} />
               ))}

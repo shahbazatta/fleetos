@@ -36,8 +36,10 @@ export default function FleetMap({ onEditGeofence }: Props) {
 
   const { layers: fmLayers, deleteGeofence: deleteFMGeofence, addGeofenceToLayer } = useFMStore();
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const deckRef = useRef<any>(null);
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const deckRef       = useRef<any>(null);
+  const vehiclesRef   = useRef(vehicles);
+  useEffect(() => { vehiclesRef.current = vehicles; }, [vehicles]);
 
   const [trails, setTrails]       = useState<TrailData[]>([]);
   const [heatmapData, setHeat]    = useState<{ lng: number; lat: number; weight: number }[]>([]);
@@ -52,15 +54,30 @@ export default function FleetMap({ onEditGeofence }: Props) {
     return geofences.filter(g => !idsInLayers.has(g.id) || !hiddenIds.has(g.id));
   }, [geofences, fmLayers]);
 
+  // Fetch trails using the /trail endpoint (ST_MakeLine ORDER BY recorded_at — correct order)
   useEffect(() => {
-    if (!selectedVehicleId || !showTrails) { setTrails([]); return; }
-    api.get(`/vehicles/${selectedVehicleId}/telemetry?limit=200`).then(({ data }) => {
-      const path = data.telemetry
-        .filter((t: any) => t.lng != null && t.lat != null)
-        .map((t: any) => [parseFloat(t.lng), parseFloat(t.lat)] as [number, number]);
-      if (path.length >= 2) setTrails([{ vehicleId: selectedVehicleId, path, color: [0, 212, 232, 180] }]);
-    }).catch(() => {});
-  }, [selectedVehicleId, showTrails]);
+    if (!showTrails) { setTrails([]); return; }
+    const vs = vehiclesRef.current;
+    // If a vehicle is selected show its trail; otherwise show up to 10 active/idle vehicles
+    const ids = selectedVehicleId
+      ? [selectedVehicleId]
+      : vs.filter(v => v.status === 'active' || v.status === 'idle').map(v => v.id).slice(0, 10);
+    if (ids.length === 0) { setTrails([]); return; }
+    Promise.all(
+      ids.map(vid =>
+        api.get(`/vehicles/${vid}/trail?minutes=60`).then(({ data }) => {
+          if (!data?.trail?.coordinates || data.trail.coordinates.length < 2) return null;
+          const v = vs.find(vv => vv.id === vid);
+          const col = v ? statusColor(v.status) : [0, 212, 232];
+          return {
+            vehicleId: vid,
+            path: data.trail.coordinates as [number, number][],
+            color: [col[0], col[1], col[2], 200] as [number, number, number, number],
+          };
+        }).catch(() => null)
+      )
+    ).then(results => setTrails(results.filter(Boolean) as TrailData[]));
+  }, [showTrails, selectedVehicleId]);
 
   useEffect(() => {
     if (!showHeatmap) { setHeat([]); return; }

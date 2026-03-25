@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Users, Truck, MapPin, Warehouse, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useFMStore } from '../store/fmStore';
 import { useAuthStore } from '../store/authStore';
@@ -14,14 +15,8 @@ import { C } from '../components/fm/FMShared';
 
 type Tab = 'drivers' | 'vehicles' | 'geofences' | 'depots';
 
-const TABS: { id: Tab; icon: React.ReactNode; label: string; summaryKey: 'drivers' | 'vehicles' | 'geofences' | 'depots' }[] = [
-  { id: 'drivers',   icon: <Users    size={15} />, label: 'Drivers',   summaryKey: 'drivers'   },
-  { id: 'vehicles',  icon: <Truck    size={15} />, label: 'Vehicles',  summaryKey: 'vehicles'  },
-  { id: 'geofences', icon: <MapPin   size={15} />, label: 'Geofences', summaryKey: 'geofences' },
-  { id: 'depots',    icon: <Warehouse size={15}/>, label: 'Depots',    summaryKey: 'depots'    },
-];
-
 export default function FleetManagementPage() {
+  const { t } = useTranslation();
   const { fetchAll, isLoading, summary, loadLayers } = useFMStore();
   const { user } = useAuthStore();
   const { tenantFilter } = useFleetStore();
@@ -30,6 +25,13 @@ export default function FleetManagementPage() {
   const [activeTab, setActiveTab] = React.useState<Tab>('drivers');
 
   const isSuperadmin = user?.role === 'superadmin';
+
+  const TABS: { id: Tab; icon: React.ReactNode; label: string; summaryKey: Tab }[] = [
+    { id: 'drivers',   icon: <Users     size={15} />, label: t('fleet_mgmt.tabs.drivers'),   summaryKey: 'drivers'   },
+    { id: 'vehicles',  icon: <Truck     size={15} />, label: t('fleet_mgmt.tabs.vehicles'),  summaryKey: 'vehicles'  },
+    { id: 'geofences', icon: <MapPin    size={15} />, label: t('fleet_mgmt.tabs.geofences'), summaryKey: 'geofences' },
+    { id: 'depots',    icon: <Warehouse size={15} />, label: t('fleet_mgmt.tabs.depots'),    summaryKey: 'depots'    },
+  ];
 
   useEffect(() => {
     if (isSuperadmin && tenants.length === 0) fetchTenants();
@@ -50,15 +52,25 @@ export default function FleetManagementPage() {
         <div style={{ background: '#0a1828', borderBottom: `1px solid ${C.border}`, padding: '0 32px', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <button onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', background: 'rgba(255,255,255,.04)', border: `1px solid ${C.borderW}`, borderRadius: 7, color: '#8da4c2', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}>
-                <ArrowLeft size={13} /> Dashboard
+              <button
+                onClick={() => navigate('/')}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', background: 'rgba(255,255,255,.04)', border: `1px solid ${C.borderW}`, borderRadius: 7, color: '#8da4c2', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}
+              >
+                <ArrowLeft size={13} /> {t('fleet_mgmt.back')}
               </button>
               <div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color: C.text }}>Fleet Management</div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color: C.text }}>
+                  {t('fleet_mgmt.title')}
+                </div>
                 <div style={{ fontSize: 12, color: C.muted, marginTop: 2, fontFamily: 'DM Sans, sans-serif' }}>
                   {isSuperadmin && tenantFilter
-                    ? <><span style={{ color: '#f59e0b', fontWeight: 600 }}>{tenants.find(t => t.id === tenantFilter)?.name ?? 'Tenant'}</span>{' — drivers, vehicles, geofences and depots'}</>
-                    : <>{user?.tenant ? user.tenant.name : 'Manage'} — drivers, vehicles, geofences and depots</>
+                    ? <>
+                        {t('fleet_mgmt.filtering_by')}{' '}
+                        <span style={{ color: '#f59e0b', fontWeight: 600 }}>
+                          {tenants.find(t => t.id === tenantFilter)?.name ?? 'Tenant'}
+                        </span>
+                      </>
+                    : <>{user?.tenant ? user.tenant.name : ''} — {t('fleet_mgmt.subtitle')}</>
                   }
                 </div>
               </div>
@@ -66,31 +78,35 @@ export default function FleetManagementPage() {
 
             <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
               {/* Summary pills */}
-              {summary && TABS.map(t => {
-                const s = summary[t.summaryKey];
+              {summary && TABS.map(tab => {
+                const s = summary[tab.summaryKey];
                 return (
-                  <div key={t.id} style={{ textAlign: 'center' }}>
+                  <div key={tab.id} style={{ textAlign: 'center' }}>
                     <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 20, fontWeight: 700, color: C.cyan, lineHeight: 1 }}>{s.total}</div>
-                    <div style={{ fontSize: 9, color: C.muted, marginTop: 2, letterSpacing: 1, textTransform: 'uppercase' }}>{t.label}</div>
+                    <div style={{ fontSize: 9, color: C.muted, marginTop: 2, letterSpacing: 1, textTransform: 'uppercase' }}>{tab.label}</div>
                   </div>
                 );
               })}
-              <button onClick={() => fetchAll(tenantFilter || undefined)} disabled={isLoading} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'rgba(255,255,255,.04)', border: `1px solid ${C.borderW}`, borderRadius: 8, color: '#8da4c2', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}>
+              <button
+                onClick={() => fetchAll(tenantFilter || undefined)}
+                disabled={isLoading}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'rgba(255,255,255,.04)', border: `1px solid ${C.borderW}`, borderRadius: 8, color: '#8da4c2', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}
+              >
                 <RefreshCw size={13} style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
-                {isLoading ? 'Loading...' : 'Refresh'}
+                {isLoading ? t('fleet_mgmt.loading') : t('fleet_mgmt.refresh')}
               </button>
             </div>
           </div>
 
           {/* Tab bar */}
           <div style={{ display: 'flex', gap: 0 }}>
-            {TABS.map(t => {
-              const s = summary?.[t.summaryKey];
-              const isActive = activeTab === t.id;
+            {TABS.map(tab => {
+              const s = summary?.[tab.summaryKey];
+              const isActive = activeTab === tab.id;
               return (
                 <button
-                  key={t.id}
-                  onClick={() => setActiveTab(t.id)}
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8,
                     padding: '12px 20px', background: 'none', border: 'none', cursor: 'pointer',
@@ -100,8 +116,8 @@ export default function FleetManagementPage() {
                     transition: 'color .15s',
                   }}
                 >
-                  {t.icon}
-                  {t.label}
+                  {tab.icon}
+                  {tab.label}
                   {s && (
                     <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, background: isActive ? 'rgba(0,212,232,.15)' : 'rgba(255,255,255,.06)', color: isActive ? C.cyan : C.muted }}>
                       {s.total}

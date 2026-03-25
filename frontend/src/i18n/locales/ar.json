@@ -157,6 +157,16 @@
       "depots": "المستودعات"
     }
   },
+  "kpi": {
+    "total": "الإجمالي",
+    "active": "نشط",
+    "idle": "خامل",
+    "offline": "غير متصل",
+    "avg_speed": "متوسط كم/س",
+    "avg_fuel": "متوسط الوقود",
+    "critical": "حرج",
+    "unread": "غير مقروء"
+  },
   "common": {
     "dashboard": "لوحة التحكم",
     "save": "حفظ",

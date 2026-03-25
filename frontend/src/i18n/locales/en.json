@@ -157,6 +157,16 @@
       "depots": "Depots"
     }
   },
+  "kpi": {
+    "total": "Total",
+    "active": "Active",
+    "idle": "Idle",
+    "offline": "Offline",
+    "avg_speed": "Avg km/h",
+    "avg_fuel": "Avg Fuel",
+    "critical": "Critical",
+    "unread": "Unread"
+  },
   "common": {
     "dashboard": "Dashboard",
     "save": "Save",
