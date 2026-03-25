@@ -106,27 +106,29 @@ function AssignDriverModal({ driver, onClose }: { driver: FMDriver; onClose: () 
 
   return (
     <Modal title="Assign Vehicle" subtitle={`Assign a vehicle to ${driver.full_name}`} onClose={onClose} width={440}>
-      {error && <ErrorBanner message={error} onDismiss={() => setError('')} />}
-      <div style={{ marginBottom: 16 }}>
-        <label style={lbl}>Select Vehicle</label>
-        <select value={selected} onChange={e => setSelected(e.target.value)} style={{ ...sel, width: '100%' }}>
-          <option value="">— Unassign (no vehicle) —</option>
-          {availableVehicles.map(v => (
-            <option key={v.id} value={v.id}>
-              {v.registration} — {v.make} {v.model} ({v.status})
-            </option>
-          ))}
-        </select>
-        {selected && (
-          <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(0,212,232,.08)', borderRadius: 7, fontSize: 12, color: C.cyan }}>
-            Selected: {vehicles.find(v => v.id === selected)?.registration}
-          </div>
-        )}
-      </div>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <CancelButton onClick={onClose} />
-        <SaveButton saving={saving} label={selected ? 'Assign Vehicle' : 'Unassign'} />
-      </div>
+      <form onSubmit={(e) => { e.preventDefault(); handle(); }}>
+        {error && <ErrorBanner message={error} onDismiss={() => setError('')} />}
+        <div style={{ marginBottom: 16 }}>
+          <label style={lbl}>Select Vehicle</label>
+          <select value={selected} onChange={e => setSelected(e.target.value)} style={{ ...sel, width: '100%' }}>
+            <option value="">— Unassign (no vehicle) —</option>
+            {availableVehicles.map(v => (
+              <option key={v.id} value={v.id}>
+                {v.registration} — {v.make} {v.model} ({v.status})
+              </option>
+            ))}
+          </select>
+          {selected && (
+            <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(0,212,232,.08)', borderRadius: 7, fontSize: 12, color: C.cyan }}>
+              Selected: {vehicles.find(v => v.id === selected)?.registration}
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <CancelButton onClick={onClose} />
+          <SaveButton saving={saving} label={selected ? 'Assign Vehicle' : 'Unassign'} />
+        </div>
+      </form>
     </Modal>
   );
 }

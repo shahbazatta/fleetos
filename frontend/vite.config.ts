@@ -13,4 +13,9 @@ export default defineConfig({
   resolve: {
     alias: { '@': '/src' },
   },
+  build: {
+    rollupOptions: {
+      external: ['@deck.gl/widgets'],
+    },
+  },
 });

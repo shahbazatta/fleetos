@@ -15,7 +15,7 @@ interface FleetStore {
   showGeofences: boolean;
   showHeatmap: boolean;
   showTrails: boolean;
-  sidebarTab: 'vehicles' | 'alerts' | 'drivers' | 'analytics';
+  sidebarTab: 'vehicles' | 'alerts' | 'drivers' | 'analytics' | 'layers';
   ws: WebSocket | null;
   wsConnected: boolean;
 

@@ -1,14 +1,17 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Map, { NavigationControl } from 'react-map-gl';
 import DeckGL from '@deck.gl/react';
 import { ScatterplotLayer, IconLayer, PathLayer, TextLayer } from '@deck.gl/layers';
 import { PolygonLayer } from '@deck.gl/layers';
 import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import { useFleetStore } from '../../store/fleetStore';
+import { useFMStore } from '../../store/fmStore';
+import { useThemeStore } from '../../store/themeStore';
 import type { Vehicle, Geofence } from '../../types';
 import { statusColor } from '../../utils/colors';
 import api from '../../services/api';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { useTranslation } from 'react-i18next';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
@@ -17,18 +20,47 @@ const VEHICLE_ICON_URL = `data:image/svg+xml;base64,${btoa(VEHICLE_ICON_SVG)}`;
 
 interface TrailData { vehicleId: string; path: [number, number][]; color: [number,number,number,number]; }
 
-export default function FleetMap() {
+interface GeofencePopup {
+  geofence: Geofence;
+  x: number;
+  y: number;
+}
+
+interface Props {
+  onDrawGeofence?: () => void;
+  onEditGeofence?: (g: Geofence) => void;
+}
+
+export default function FleetMap({ onEditGeofence }: Props) {
+  const { t } = useTranslation();
+  const { colors } = useThemeStore();
   const {
     vehicles, selectedVehicleId, geofences,
     mapViewState, setMapViewState,
     showGeofences, showHeatmap, showTrails,
-    selectVehicle,
+    selectVehicle, fetchGeofences,
   } = useFleetStore();
+
+  const { layers: fmLayers, deleteGeofence: deleteFMGeofence } = useFMStore();
 
   const [trails, setTrails]           = useState<TrailData[]>([]);
   const [heatmapData, setHeatmapData] = useState<{ lng: number; lat: number; weight: number }[]>([]);
+  const [geofencePopup, setGeofencePopup] = useState<GeofencePopup | null>(null);
+  const [deletingGeofence, setDeletingGeofence] = useState<Geofence | null>(null);
 
-  // Load trail for selected vehicle
+  // Compute visible geofences based on fmLayers
+  const visibleGeofences = useMemo(() => {
+    if (!fmLayers || fmLayers.length === 0) return geofences;
+    const idsInLayers = new Set(fmLayers.flatMap(l => l.geofence_ids));
+    const hiddenIds = new Set(
+      fmLayers.filter(l => !l.is_visible).flatMap(l => l.geofence_ids)
+    );
+    return geofences.filter(g => {
+      if (!idsInLayers.has(g.id)) return true; // not in any layer → always show
+      return !hiddenIds.has(g.id);
+    });
+  }, [geofences, fmLayers]);
+
   useEffect(() => {
     if (!selectedVehicleId || !showTrails) { setTrails([]); return; }
     api.get(`/vehicles/${selectedVehicleId}/telemetry?limit=200`).then(({ data }) => {
@@ -39,7 +71,6 @@ export default function FleetMap() {
     }).catch(() => {});
   }, [selectedVehicleId, showTrails]);
 
-  // Load heatmap data
   useEffect(() => {
     if (!showHeatmap) { setHeatmapData([]); return; }
     api.get('/analytics/alert-heatmap').then(({ data }) => {
@@ -52,11 +83,10 @@ export default function FleetMap() {
   const layers = useMemo(() => {
     const out: any[] = [];
 
-    // 1. Geofence polygons
-    if (showGeofences && geofences.length > 0) {
+    if (showGeofences && visibleGeofences.length > 0) {
       out.push(new PolygonLayer({
         id: 'geofences-fill',
-        data: geofences.filter(g => g.is_active && g.boundary?.coordinates),
+        data: visibleGeofences.filter(g => g.is_active && g.boundary?.coordinates),
         getPolygon: (g: Geofence) => g.boundary.coordinates[0] as [number,number][],
         getFillColor: (g: Geofence) => {
           const [r, gg, b] = hexToRgb(g.color || '#00d4e8');
@@ -70,10 +100,15 @@ export default function FleetMap() {
         filled: true,
         stroked: true,
         pickable: true,
+        onClick: ({ object, x, y }: { object?: Geofence; x: number; y: number }) => {
+          if (object) {
+            setGeofencePopup({ geofence: object, x, y });
+            return true;
+          }
+        },
       }));
     }
 
-    // 2. Vehicle trails
     if (showTrails && trails.length > 0) {
       out.push(new PathLayer({
         id: 'vehicle-trails',
@@ -87,7 +122,6 @@ export default function FleetMap() {
       }));
     }
 
-    // 3. Alert heatmap
     if (showHeatmap && heatmapData.length > 0) {
       out.push(new HeatmapLayer({
         id: 'alert-heatmap',
@@ -104,7 +138,6 @@ export default function FleetMap() {
       }));
     }
 
-    // 4. Pulse rings for active/alert vehicles
     out.push(new ScatterplotLayer({
       id: 'vehicle-pulse',
       data: vehicles.filter(v => v.status === 'active' || v.status === 'alert'),
@@ -117,7 +150,6 @@ export default function FleetMap() {
       pickable: false,
     }));
 
-    // 5. Outer ring
     out.push(new ScatterplotLayer({
       id: 'vehicle-outer',
       data: vehicles,
@@ -133,7 +165,6 @@ export default function FleetMap() {
       pickable: false,
     }));
 
-    // 6. Direction arrows (only moving vehicles)
     out.push(new IconLayer({
       id: 'vehicle-arrows',
       data: vehicles.filter(v => v.current_speed > 2),
@@ -147,7 +178,6 @@ export default function FleetMap() {
       pickable: false,
     }));
 
-    // 7. Core dots (clickable)
     out.push(new ScatterplotLayer({
       id: 'vehicle-core',
       data: vehicles,
@@ -163,11 +193,10 @@ export default function FleetMap() {
       autoHighlight: true,
       highlightColor: [255, 255, 255, 60],
       onClick: ({ object }: { object?: Vehicle }) => {
-        if (object) selectVehicle(object.id);
+        if (object) { selectVehicle(object.id); setGeofencePopup(null); }
       },
     }));
 
-    // 8. Selected vehicle ring
     if (selectedVehicleId) {
       const sel = vehicles.find(v => v.id === selectedVehicleId);
       if (sel) {
@@ -187,7 +216,6 @@ export default function FleetMap() {
       }
     }
 
-    // 9. Speed labels at high zoom
     if (mapViewState.zoom > 13) {
       out.push(new TextLayer({
         id: 'vehicle-labels',
@@ -207,7 +235,7 @@ export default function FleetMap() {
     }
 
     return out;
-  }, [vehicles, geofences, trails, heatmapData, selectedVehicleId,
+  }, [vehicles, visibleGeofences, trails, heatmapData, selectedVehicleId,
       showGeofences, showTrails, showHeatmap, mapViewState.zoom, selectVehicle]);
 
   const onViewStateChange = useCallback(({ viewState }: any) => {
@@ -232,17 +260,25 @@ export default function FleetMap() {
         style: {},
       };
     }
-    if (object.name && object.boundary) {
-      return {
-        html: `<div style="background:#0f2240;border:1px solid #00d4e8;padding:8px 12px;border-radius:6px;font-size:12px;color:#e8eaf0"><strong>${object.name}</strong></div>`,
-        style: {},
-      };
-    }
     return null;
   }, []);
 
+  const handleDeleteGeofence = async () => {
+    if (!deletingGeofence) return;
+    await deleteFMGeofence(deletingGeofence.id);
+    fetchGeofences();
+    setDeletingGeofence(null);
+    setGeofencePopup(null);
+  };
+
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}
+      onClick={(e) => {
+        // Close popup on background click
+        if ((e.target as HTMLElement).closest('[data-geofence-popup]')) return;
+        setGeofencePopup(null);
+      }}
+    >
       <DeckGL
         viewState={mapViewState}
         onViewStateChange={onViewStateChange}
@@ -254,12 +290,72 @@ export default function FleetMap() {
         <Map
           reuseMaps
           mapboxAccessToken={MAPBOX_TOKEN}
-          mapStyle="mapbox://styles/mapbox/dark-v11"
+          mapStyle={colors.mapStyle}
           attributionControl={false}
         >
           <NavigationControl position="bottom-right" showCompass />
         </Map>
       </DeckGL>
+
+      {/* Geofence popup */}
+      {geofencePopup && (
+        <div
+          data-geofence-popup="1"
+          style={{
+            position: 'absolute',
+            left: Math.min(geofencePopup.x + 8, window.innerWidth - 220),
+            top: Math.min(geofencePopup.y + 8, window.innerHeight - 120),
+            background: '#0a1828',
+            border: '1px solid rgba(0,212,232,.3)',
+            borderRadius: 10,
+            padding: '12px 14px',
+            zIndex: 50,
+            minWidth: 200,
+            boxShadow: '0 8px 32px rgba(0,0,0,.5)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: geofencePopup.geofence.color, flexShrink: 0 }} />
+            <span style={{ fontWeight: 700, fontSize: 13, color: '#e8eaf0', fontFamily: 'Syne, sans-serif', flex: 1 }}>{geofencePopup.geofence.name}</span>
+            <button onClick={() => setGeofencePopup(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5d7a9a', display: 'flex', padding: 0 }}>✕</button>
+          </div>
+          <div style={{ fontSize: 11, color: '#5d7a9a', marginBottom: 10, textTransform: 'capitalize', fontFamily: 'DM Sans, sans-serif' }}>
+            {geofencePopup.geofence.zone_type} zone
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {onEditGeofence && (
+              <button
+                onClick={() => { onEditGeofence(geofencePopup.geofence); setGeofencePopup(null); }}
+                style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: '1px solid rgba(0,212,232,.3)', background: 'rgba(0,212,232,.08)', color: '#00d4e8', cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}
+              >
+                {t('geofence_popup.edit')}
+              </button>
+            )}
+            <button
+              onClick={() => { setDeletingGeofence(geofencePopup.geofence); }}
+              style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: '1px solid rgba(239,68,68,.25)', background: 'rgba(239,68,68,.08)', color: '#ef4444', cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}
+            >
+              {t('geofence_popup.delete')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirm */}
+      {deletingGeofence && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#0a1828', border: '1px solid rgba(239,68,68,.3)', borderRadius: 14, padding: 28, maxWidth: 360, width: '90%' }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#e8eaf0', marginBottom: 8 }}>Delete Geofence?</div>
+            <div style={{ fontSize: 13, color: '#8da4c2', marginBottom: 20, lineHeight: 1.6 }}>
+              <strong style={{ color: '#e8eaf0' }}>{deletingGeofence.name}</strong> will be permanently removed.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setDeletingGeofence(null)} style={{ flex: 1, padding: '10px', borderRadius: 8, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)', color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Cancel</button>
+              <button onClick={handleDeleteGeofence} style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13 }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

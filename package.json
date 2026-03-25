@@ -14,5 +14,8 @@
   "devDependencies": {
     "concurrently": "^8.2.2",
     "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "deck.gl": "^9.2.11"
   }
 }

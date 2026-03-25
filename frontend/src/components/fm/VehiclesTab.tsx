@@ -119,20 +119,22 @@ function AssignDriverModal({ vehicle, onClose }: { vehicle: FMVehicle; onClose: 
 
   return (
     <Modal title="Assign Driver" subtitle={`Assign a driver to ${vehicle.registration}`} onClose={onClose} width={440}>
-      {error && <ErrorBanner message={error} onDismiss={() => setError('')} />}
-      <div style={{ marginBottom: 16 }}>
-        <label style={lbl}>Select Driver</label>
-        <select value={selected} onChange={e => setSelected(e.target.value)} style={{ ...sel, width: '100%' }}>
-          <option value="">— Unassign driver —</option>
-          {available.map(d => (
-            <option key={d.id} value={d.id}>{d.full_name} ({d.employee_id}) — Score: {Math.round(d.safety_score)}</option>
-          ))}
-        </select>
-      </div>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <CancelButton onClick={onClose} />
-        <SaveButton saving={saving} label={selected ? 'Assign Driver' : 'Unassign Driver'} />
-      </div>
+      <form onSubmit={(e) => { e.preventDefault(); handle(); }}>
+        {error && <ErrorBanner message={error} onDismiss={() => setError('')} />}
+        <div style={{ marginBottom: 16 }}>
+          <label style={lbl}>Select Driver</label>
+          <select value={selected} onChange={e => setSelected(e.target.value)} style={{ ...sel, width: '100%' }}>
+            <option value="">— Unassign driver —</option>
+            {available.map(d => (
+              <option key={d.id} value={d.id}>{d.full_name} ({d.employee_id}) — Score: {Math.round(d.safety_score)}</option>
+            ))}
+          </select>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <CancelButton onClick={onClose} />
+          <SaveButton saving={saving} label={selected ? 'Assign Driver' : 'Unassign Driver'} />
+        </div>
+      </form>
     </Modal>
   );
 }

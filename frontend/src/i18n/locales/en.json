@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "fleet_mgmt": "Fleet Mgmt",
+    "tenants": "Tenants",
+    "users": "Users",
+    "live": "LIVE",
+    "offline": "OFFLINE",
+    "sign_out": "Sign out",
+    "back": "← Back",
+    "platform_access": "SUPERADMIN — Platform-wide access"
+  },
+  "sidebar": {
+    "fleet": "Fleet",
+    "alerts": "Alerts",
+    "drivers": "Drivers",
+    "analytics": "Analytics",
+    "layers": "Layers"
+  },
+  "map": {
+    "geofences": "Geofences",
+    "alert_heat": "Alert Heat",
+    "trails": "Trails",
+    "draw_geofence": "Draw Zone",
+    "refresh": "Refresh"
+  },
+  "geofence_draw": {
+    "title_draw": "Draw Geofence on Map",
+    "title_edit": "Edit Geofence",
+    "subtitle_draw": "Use the polygon tool on the map, then fill in details on the right.",
+    "subtitle_edit": "Drag vertices to reshape, then update details.",
+    "name_label": "Name *",
+    "name_placeholder": "e.g. DHA Delivery Zone",
+    "zone_type": "Zone Type",
+    "speed_limit": "Speed Limit (km/h)",
+    "color": "Color",
+    "alert_enter": "Alert on enter",
+    "alert_exit": "Alert on exit",
+    "save": "Save Geofence",
+    "save_edit": "Save Changes",
+    "cancel": "Cancel",
+    "hint_draw": "Use the polygon tool (top-left of map) to draw a boundary. Click to place points, double-click to complete.",
+    "hint_done": "✓ Shape defined — fill in details",
+    "error_no_shape": "Please draw a polygon on the map first",
+    "error_no_name": "Geofence name is required",
+    "error_invalid": "Invalid polygon drawn"
+  },
+  "geofence_popup": {
+    "edit": "Edit Shape",
+    "delete": "Delete",
+    "close": "Close"
+  },
+  "themes": {
+    "label": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "contrast": "High Contrast"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "ar": "العربية"
+  }
+}

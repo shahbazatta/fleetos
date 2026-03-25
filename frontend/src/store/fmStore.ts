@@ -75,8 +75,9 @@ interface FMStore {
   isLoading: boolean;
   error:     string | null;
 
-  fetchAll:     () => Promise<void>;
-  fetchSummary: () => Promise<void>;
+  fetchAll:          () => Promise<void>;
+  fetchSummary:      () => Promise<void>;
+  fetchGeofencesOnly: () => Promise<void>;
 
   // Drivers
   createDriver: (d: any) => Promise<{ ok: boolean; error?: string }>;
@@ -142,6 +143,13 @@ export const useFMStore = create<FMStore>((set, get) => ({
 
   fetchSummary: async () => {
     try { const { data } = await api.get('/fm/summary'); set({ summary: data }); } catch {}
+  },
+
+  fetchGeofencesOnly: async () => {
+    try {
+      const { data } = await api.get('/fm/geofences');
+      set({ geofences: data.geofences });
+    } catch {}
   },
 
   // ── Drivers ──────────────────────────────────────────────────

@@ -74,6 +74,7 @@ export interface Geofence {
   description?: string;
   boundary: GeoJSON.Polygon;
   color: string;
+  zone_type?: string;
   is_active: boolean;
   alert_on_enter: boolean;
   alert_on_exit: boolean;

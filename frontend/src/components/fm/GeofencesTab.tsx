@@ -212,7 +212,7 @@ function LayerRow({ layer, geofences }: { layer: GeofenceLayer; geofences: FMGeo
   );
 }
 
-function LayersPanel({ geofences }: { geofences: FMGeofence[] }) {
+export function LayersPanel({ geofences }: { geofences: FMGeofence[] }) {
   const { layers, createLayer } = useFMStore();
   const [newName,  setNewName]  = useState('');
   const [newColor, setNewColor] = useState('#00d4e8');
