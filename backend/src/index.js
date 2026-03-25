@@ -37,6 +37,7 @@ app.use('/api/alerts',    alertsRouter);
 app.use('/api/geofences', geofencesRouter);
 app.use('/api/drivers',   driversRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/fm',        require('./routes/fleetManagement'));
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 app.use((req, res) => res.status(404).json({ error: `Route ${req.path} not found` }));

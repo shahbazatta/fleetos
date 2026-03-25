@@ -1,46 +1,45 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import UsersFullPage from './pages/UsersFullPage';
-import TenantsFullPage from './pages/TenantsFullPage';
+import LoginPage           from './pages/LoginPage';
+import DashboardPage       from './pages/DashboardPage';
+import UsersFullPage       from './pages/UsersFullPage';
+import TenantsFullPage     from './pages/TenantsFullPage';
+import FleetManagementPage from './pages/FleetManagementPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuthStore();
   if (!token) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
-
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { token, user } = useAuthStore();
   if (!token) return <Navigate to="/login" replace />;
-  if (!user || !['admin', 'superadmin'].includes(user.role)) return <Navigate to="/" replace />;
+  if (!['admin','superadmin'].includes(user?.role || '')) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
-
 function SuperadminRoute({ children }: { children: React.ReactNode }) {
   const { token, user } = useAuthStore();
   if (!token) return <Navigate to="/login" replace />;
-  if (!user || user.role !== 'superadmin') return <Navigate to="/" replace />;
+  if (user?.role !== 'superadmin') return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
 export default function App() {
   const { init } = useAuthStore();
   const [ready, setReady] = useState(false);
-
   useEffect(() => { init(); setReady(true); }, []);
   if (!ready) return null;
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-        <Route path="/users" element={<AdminRoute><UsersFullPage /></AdminRoute>} />
+        <Route path="/login"   element={<LoginPage />} />
+        <Route path="/"        element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+        <Route path="/fleet"   element={<ProtectedRoute><FleetManagementPage /></ProtectedRoute>} />
+        <Route path="/users"   element={<AdminRoute><UsersFullPage /></AdminRoute>} />
         <Route path="/tenants" element={<SuperadminRoute><TenantsFullPage /></SuperadminRoute>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*"        element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

@@ -12,9 +12,7 @@
     "db:seed": "cd backend && npm run seed"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
-  },
-  "dependencies": {
+    "concurrently": "^8.2.2",
     "typescript": "^6.0.2"
   }
 }

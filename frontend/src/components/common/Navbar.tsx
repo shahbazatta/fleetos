@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogOut, Wifi, WifiOff, UserCog, Building2 } from 'lucide-react';
+import { LogOut, Wifi, WifiOff, UserCog, Building2, Layers } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFleetStore } from '../../store/fleetStore';
 import { useAuthStore } from '../../store/authStore';
@@ -12,11 +12,12 @@ export default function Navbar() {
   const v = summary?.vehicles;
   const a = summary?.alerts;
 
-  const canManageUsers    = ['admin', 'superadmin'].includes(user?.role || '');
-  const isSuperadmin      = user?.role === 'superadmin';
-  const onDashboard       = pathname === '/';
-  const onUsersPage       = pathname === '/users';
-  const onTenantsPage     = pathname === '/tenants';
+  const canManageUsers = ['admin', 'superadmin'].includes(user?.role || '');
+  const isSuperadmin   = user?.role === 'superadmin';
+  const onDashboard    = pathname === '/';
+  const onUsersPage    = pathname === '/users';
+  const onTenantsPage  = pathname === '/tenants';
+  const onFleetPage    = pathname === '/fleet';
 
   const kpi = (val: string | number | undefined, label: string, color = '#e8eaf0') => (
     <div style={{ textAlign: 'center', padding: '0 14px', borderRight: '1px solid rgba(255,255,255,.06)' }}>
@@ -26,15 +27,14 @@ export default function Navbar() {
   );
 
   const navBtn = (label: string, icon: React.ReactNode, path: string, active: boolean) => (
-    <button onClick={() => navigate(active ? '/' : path)} style={{
-      display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px',
-      borderRadius: 7,
+    <button onClick={() => navigate(active && path !== '/fleet' ? '/' : path)} style={{
+      display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 7,
       background: active ? 'rgba(0,212,232,.15)' : 'rgba(255,255,255,.04)',
       border: `1px solid ${active ? 'rgba(0,212,232,.4)' : 'rgba(255,255,255,.1)'}`,
       color: active ? '#00d4e8' : '#8da4c2',
       cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif', transition: 'all .15s',
     }}>
-      {icon}<span>{active ? '← Back' : label}</span>
+      {icon}<span>{active && path !== '/fleet' ? '← Back' : label}</span>
     </button>
   );
 
@@ -69,21 +69,12 @@ export default function Navbar() {
         </div>
       ) : (
         <div style={{ flex: 1, padding: '0 16px' }}>
-          {user?.tenant && !isSuperadmin && (
-            <span style={{ fontSize: 12, color: '#5d7a9a', fontFamily: 'DM Sans, sans-serif' }}>
-              <span style={{ color: '#00d4e8', fontWeight: 600 }}>{user.tenant.name}</span>
-              {' · '}<span style={{ textTransform: 'capitalize' }}>{user.tenant.plan}</span> plan
-            </span>
-          )}
-          {isSuperadmin && (
-            <span style={{ fontSize: 12, color: '#f59e0b', fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}>
-              SUPERADMIN — Platform-wide access
-            </span>
-          )}
+          {user?.tenant && !isSuperadmin && <span style={{ fontSize: 12, color: '#5d7a9a', fontFamily: 'DM Sans, sans-serif' }}><span style={{ color: '#00d4e8', fontWeight: 600 }}>{user.tenant.name}</span>{' · '}<span style={{ textTransform: 'capitalize' }}>{user.tenant.plan}</span> plan</span>}
+          {isSuperadmin && <span style={{ fontSize: 12, color: '#f59e0b', fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}>SUPERADMIN — Platform-wide access</span>}
         </div>
       )}
 
-      {/* Right side */}
+      {/* Right side nav buttons */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: wsConnected ? '#22c55e' : '#ef4444' }}>
           {wsConnected ? <Wifi size={14} /> : <WifiOff size={14} />}
@@ -91,8 +82,9 @@ export default function Navbar() {
         </div>
         <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,.08)' }} />
 
-        {isSuperadmin && navBtn('Tenants', <Building2 size={14} />, '/tenants', onTenantsPage)}
-        {canManageUsers && navBtn('Users', <UserCog size={14} />, '/users', onUsersPage)}
+        {navBtn('Fleet Mgmt', <Layers size={14} />, '/fleet', onFleetPage)}
+        {isSuperadmin    && navBtn('Tenants', <Building2 size={14} />, '/tenants', onTenantsPage)}
+        {canManageUsers  && navBtn('Users',   <UserCog  size={14} />, '/users',   onUsersPage)}
 
         <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,.08)' }} />
         <div style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}>
