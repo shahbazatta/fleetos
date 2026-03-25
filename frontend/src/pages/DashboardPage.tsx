@@ -10,7 +10,7 @@ import { useAuthStore } from '../store/authStore';
 import type { Geofence } from '../types';
 
 export default function DashboardPage() {
-  const { fetchVehicles, fetchAlerts, fetchGeofences, fetchDrivers, fetchSummary, connectWs } = useFleetStore();
+  const { fetchVehicles, fetchAlerts, fetchGeofences, fetchDrivers, fetchSummary, connectWs, tenantFilter } = useFleetStore();
   const { fetchGeofencesOnly, loadLayers } = useFMStore();
   const { user } = useAuthStore();
 
@@ -24,11 +24,12 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Load FM geofences and layers for the Layers sidebar panel
+  // Load FM geofences and layers for the Layers sidebar panel — re-runs on tenant filter change
   useEffect(() => {
-    fetchGeofencesOnly();
-    if (user?.tenant_id) loadLayers(user.tenant_id);
-  }, [user?.tenant_id]);
+    fetchGeofencesOnly(tenantFilter || undefined);
+    const layerTenant = tenantFilter || user?.tenant_id;
+    if (layerTenant) loadLayers(layerTenant);
+  }, [user?.tenant_id, tenantFilter]);
 
   const handleEditGeofence = (g: Geofence) => {
     // Cast Geofence → FMGeofence-compatible for the draw modal

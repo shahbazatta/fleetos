@@ -75,9 +75,9 @@ interface FMStore {
   isLoading: boolean;
   error:     string | null;
 
-  fetchAll:          () => Promise<void>;
+  fetchAll:          (tenantId?: string) => Promise<void>;
   fetchSummary:      () => Promise<void>;
-  fetchGeofencesOnly: () => Promise<void>;
+  fetchGeofencesOnly: (tenantId?: string) => Promise<void>;
 
   // Drivers
   createDriver: (d: any) => Promise<{ ok: boolean; error?: string }>;
@@ -118,15 +118,16 @@ export const useFMStore = create<FMStore>((set, get) => ({
   drivers: [], vehicles: [], geofences: [], depots: [],
   layers: [], summary: null, isLoading: false, error: null,
 
-  fetchAll: async () => {
+  fetchAll: async (tenantId?: string) => {
     set({ isLoading: true, error: null });
     try {
+      const qs = tenantId ? `?tenant_id=${tenantId}` : '';
       const [dr, veh, geo, dep, sum] = await Promise.all([
-        api.get('/fm/drivers'),
-        api.get('/fm/vehicles'),
-        api.get('/fm/geofences'),
-        api.get('/fm/depots'),
-        api.get('/fm/summary'),
+        api.get(`/fm/drivers${qs}`),
+        api.get(`/fm/vehicles${qs}`),
+        api.get(`/fm/geofences${qs}`),
+        api.get(`/fm/depots${qs}`),
+        api.get(`/fm/summary${qs}`),
       ]);
       set({
         drivers:   dr.data.drivers,
@@ -145,9 +146,10 @@ export const useFMStore = create<FMStore>((set, get) => ({
     try { const { data } = await api.get('/fm/summary'); set({ summary: data }); } catch {}
   },
 
-  fetchGeofencesOnly: async () => {
+  fetchGeofencesOnly: async (tenantId?: string) => {
     try {
-      const { data } = await api.get('/fm/geofences');
+      const qs = tenantId ? `?tenant_id=${tenantId}` : '';
+      const { data } = await api.get(`/fm/geofences${qs}`);
       set({ geofences: data.geofences });
     } catch {}
   },

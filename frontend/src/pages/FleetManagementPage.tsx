@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Truck, MapPin, Warehouse, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useFMStore } from '../store/fmStore';
 import { useAuthStore } from '../store/authStore';
+import { useFleetStore } from '../store/fleetStore';
+import { useTenantsStore } from '../store/tenantsStore';
 import AppLayout from './AppLayout';
 import DriversTab   from '../components/fm/DriversTab';
 import VehiclesTab  from '../components/fm/VehiclesTab';
@@ -22,14 +24,23 @@ const TABS: { id: Tab; icon: React.ReactNode; label: string; summaryKey: 'driver
 export default function FleetManagementPage() {
   const { fetchAll, isLoading, summary, loadLayers } = useFMStore();
   const { user } = useAuthStore();
+  const { tenantFilter } = useFleetStore();
+  const { tenants, fetchTenants } = useTenantsStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState<Tab>('drivers');
 
+  const isSuperadmin = user?.role === 'superadmin';
+
   useEffect(() => {
-    fetchAll();
-    // Load saved layers from localStorage
-    if (user?.tenant_id) loadLayers(user.tenant_id);
-  }, [user?.tenant_id]);
+    if (isSuperadmin && tenants.length === 0) fetchTenants();
+  }, [isSuperadmin]);
+
+  useEffect(() => {
+    const tid = tenantFilter || undefined;
+    fetchAll(tid);
+    const layerTenant = tenantFilter || user?.tenant_id;
+    if (layerTenant) loadLayers(layerTenant);
+  }, [tenantFilter, user?.tenant_id]);
 
   return (
     <AppLayout>
@@ -45,7 +56,10 @@ export default function FleetManagementPage() {
               <div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color: C.text }}>Fleet Management</div>
                 <div style={{ fontSize: 12, color: C.muted, marginTop: 2, fontFamily: 'DM Sans, sans-serif' }}>
-                  {user?.tenant ? user.tenant.name : 'Manage'} — drivers, vehicles, geofences and depots
+                  {isSuperadmin && tenantFilter
+                    ? <><span style={{ color: '#f59e0b', fontWeight: 600 }}>{tenants.find(t => t.id === tenantFilter)?.name ?? 'Tenant'}</span>{' — drivers, vehicles, geofences and depots'}</>
+                    : <>{user?.tenant ? user.tenant.name : 'Manage'} — drivers, vehicles, geofences and depots</>
+                  }
                 </div>
               </div>
             </div>
@@ -61,7 +75,7 @@ export default function FleetManagementPage() {
                   </div>
                 );
               })}
-              <button onClick={() => fetchAll()} disabled={isLoading} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'rgba(255,255,255,.04)', border: `1px solid ${C.borderW}`, borderRadius: 8, color: '#8da4c2', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}>
+              <button onClick={() => fetchAll(tenantFilter || undefined)} disabled={isLoading} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'rgba(255,255,255,.04)', border: `1px solid ${C.borderW}`, borderRadius: 8, color: '#8da4c2', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}>
                 <RefreshCw size={13} style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
                 {isLoading ? 'Loading...' : 'Refresh'}
               </button>

@@ -18,6 +18,7 @@ interface FleetStore {
   sidebarTab: 'vehicles' | 'alerts' | 'drivers' | 'analytics' | 'layers';
   ws: WebSocket | null;
   wsConnected: boolean;
+  tenantFilter: string | null; // superadmin only — filter all data by tenant
 
   // Actions
   fetchVehicles: () => Promise<void>;
@@ -25,6 +26,8 @@ interface FleetStore {
   fetchGeofences: () => Promise<void>;
   fetchDrivers: () => Promise<void>;
   fetchSummary: () => Promise<void>;
+  fetchAll: () => Promise<void>;
+  setTenantFilter: (id: string | null) => void;
   selectVehicle: (id: string | null) => void;
   updateVehicleTelemetry: (updates: WsMessage['vehicles']) => void;
   addAlert: (alert: Alert) => void;
@@ -53,40 +56,67 @@ export const useFleetStore = create<FleetStore>((set, get) => ({
   sidebarTab: 'vehicles',
   ws: null,
   wsConnected: false,
+  tenantFilter: null,
 
   fetchVehicles: async () => {
     try {
-      const { data } = await api.get('/vehicles');
+      const tf = get().tenantFilter;
+      const qs = tf ? `?tenant_id=${tf}` : '';
+      const { data } = await api.get(`/vehicles${qs}`);
       set({ vehicles: data.vehicles });
     } catch (e) { console.error('fetchVehicles', e); }
   },
 
   fetchAlerts: async () => {
     try {
-      const { data } = await api.get('/alerts?limit=100');
+      const tf = get().tenantFilter;
+      const qs = tf ? `?tenant_id=${tf}&limit=100` : '?limit=100';
+      const { data } = await api.get(`/alerts${qs}`);
       set({ alerts: data.alerts });
     } catch (e) { console.error('fetchAlerts', e); }
   },
 
   fetchGeofences: async () => {
     try {
-      const { data } = await api.get('/geofences');
+      const tf = get().tenantFilter;
+      const qs = tf ? `?tenant_id=${tf}` : '';
+      const { data } = await api.get(`/geofences${qs}`);
       set({ geofences: data.geofences });
     } catch (e) { console.error('fetchGeofences', e); }
   },
 
   fetchDrivers: async () => {
     try {
-      const { data } = await api.get('/drivers');
+      const tf = get().tenantFilter;
+      const qs = tf ? `?tenant_id=${tf}` : '';
+      const { data } = await api.get(`/drivers${qs}`);
       set({ drivers: data.drivers });
     } catch (e) { console.error('fetchDrivers', e); }
   },
 
   fetchSummary: async () => {
     try {
-      const { data } = await api.get('/analytics/fleet-summary');
+      const tf = get().tenantFilter;
+      const qs = tf ? `?tenant_id=${tf}` : '';
+      const { data } = await api.get(`/analytics/fleet-summary${qs}`);
       set({ summary: data });
     } catch (e) { console.error('fetchSummary', e); }
+  },
+
+  fetchAll: async () => {
+    await Promise.all([
+      get().fetchVehicles(),
+      get().fetchAlerts(),
+      get().fetchGeofences(),
+      get().fetchDrivers(),
+      get().fetchSummary(),
+    ]);
+  },
+
+  setTenantFilter: (id) => {
+    set({ tenantFilter: id, selectedVehicleId: null });
+    // Re-fetch everything with new tenant scope
+    setTimeout(() => get().fetchAll(), 0);
   },
 
   selectVehicle: (id) => {

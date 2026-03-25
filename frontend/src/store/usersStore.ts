@@ -38,7 +38,7 @@ interface UsersStore {
   isLoading: boolean;
   error:     string | null;
 
-  fetchUsers:   () => Promise<void>;
+  fetchUsers:   (tenantId?: string) => Promise<void>;
   createUser:   (payload: CreateUserPayload) => Promise<{ ok: boolean; error?: string }>;
   updateUser:   (id: string, payload: UpdateUserPayload) => Promise<{ ok: boolean; error?: string }>;
   deleteUser:   (id: string) => Promise<{ ok: boolean; error?: string }>;
@@ -50,10 +50,11 @@ export const useUsersStore = create<UsersStore>((set, get) => ({
   isLoading: false,
   error:     null,
 
-  fetchUsers: async () => {
+  fetchUsers: async (tenantId?: string) => {
     set({ isLoading: true, error: null });
     try {
-      const { data } = await api.get('/users');
+      const qs = tenantId ? `?tenant_id=${tenantId}` : '';
+      const { data } = await api.get(`/users${qs}`);
       set({ users: data.users, isLoading: false });
     } catch (err: any) {
       set({ error: err.response?.data?.error || 'Failed to load users', isLoading: false });

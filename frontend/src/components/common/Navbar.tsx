@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LogOut, Wifi, WifiOff, UserCog, Building2, Layers, Palette, Globe } from 'lucide-react';
+import { LogOut, Wifi, WifiOff, UserCog, Building2, Layers, Palette, Globe, Filter } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useFleetStore } from '../../store/fleetStore';
 import { useAuthStore } from '../../store/authStore';
-import { useThemeStore, THEMES, type ThemeName } from '../../store/themeStore';
+import { useThemeStore, type ThemeName } from '../../store/themeStore';
+import { useTenantsStore } from '../../store/tenantsStore';
 
 function Dropdown({ trigger, children }: { trigger: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -54,9 +55,10 @@ function DropItem({ label, active, onClick }: { label: string; active?: boolean;
 
 export default function Navbar() {
   const { t, i18n } = useTranslation();
-  const { summary, wsConnected } = useFleetStore();
+  const { summary, wsConnected, tenantFilter, setTenantFilter } = useFleetStore();
   const { user, logout } = useAuthStore();
   const { theme, colors, setTheme } = useThemeStore();
+  const { tenants, fetchTenants } = useTenantsStore();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const v = summary?.vehicles;
@@ -68,6 +70,11 @@ export default function Navbar() {
   const onUsersPage    = pathname === '/users';
   const onTenantsPage  = pathname === '/tenants';
   const onFleetPage    = pathname === '/fleet';
+
+  // Load tenants list for superadmin tenant filter
+  useEffect(() => {
+    if (isSuperadmin && tenants.length === 0) fetchTenants();
+  }, [isSuperadmin]);
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -152,6 +159,28 @@ export default function Navbar() {
 
       {/* Right controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+
+        {/* Superadmin tenant filter */}
+        {isSuperadmin && (
+          <>
+            <Dropdown trigger={
+              <div style={{ ...iconBtnStyle, borderColor: tenantFilter ? 'rgba(245,158,11,.5)' : undefined, color: tenantFilter ? '#f59e0b' : colors.muted }}>
+                <Filter size={13} />
+                <span style={{ fontSize: 11, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {tenantFilter ? (tenants.find(t => t.id === tenantFilter)?.name ?? 'Tenant') : 'All Tenants'}
+                </span>
+              </div>
+            }>
+              <div style={{ padding: '6px 14px 4px', fontSize: 10, color: '#3a5070', letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif' }}>Filter by Tenant</div>
+              <DropItem label="All Tenants" active={!tenantFilter} onClick={() => setTenantFilter(null)} />
+              {tenants.filter(t => t.is_active).map(tenant => (
+                <DropItem key={tenant.id} label={tenant.name} active={tenantFilter === tenant.id} onClick={() => setTenantFilter(tenant.id)} />
+              ))}
+            </Dropdown>
+            <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,.08)' }} />
+          </>
+        )}
+
         {/* Live status */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: wsConnected ? '#22c55e' : '#ef4444' }}>
           {wsConnected ? <Wifi size={14} /> : <WifiOff size={14} />}

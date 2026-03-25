@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   UserPlus, Pencil, Trash2, ToggleLeft, ToggleRight,
   RefreshCw, Search, ArrowLeft, Shield, Users, Activity,
 } from 'lucide-react';
 import { useUsersStore, type PortalUser, type UserRole } from '../store/usersStore';
 import { useAuthStore } from '../store/authStore';
+import { useFleetStore } from '../store/fleetStore';
+import { useTenantsStore } from '../store/tenantsStore';
 import UserModal from '../components/users/UserModal';
 import AppLayout from './AppLayout';
 import { timeAgo } from '../utils/colors';
@@ -67,8 +70,11 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
 }
 
 export default function UsersFullPage() {
+  const { t } = useTranslation();
   const { users, isLoading, fetchUsers, createUser, updateUser, deleteUser, toggleActive } = useUsersStore();
   const { user: currentUser } = useAuthStore();
+  const { tenantFilter } = useFleetStore();
+  const { tenants, fetchTenants } = useTenantsStore();
   const navigate = useNavigate();
 
   const [search,        setSearch]        = useState('');
@@ -77,10 +83,16 @@ export default function UsersFullPage() {
   const [confirmDelete, setConfirmDelete] = useState<PortalUser | null>(null);
   const [actionError,   setActionError]   = useState('');
 
-  useEffect(() => { fetchUsers(); }, []);
-
   const isSuperadmin = currentUser?.role === 'superadmin';
   const canCreate    = ['admin', 'superadmin'].includes(currentUser?.role || '');
+
+  useEffect(() => {
+    if (isSuperadmin && tenants.length === 0) fetchTenants();
+  }, [isSuperadmin]);
+
+  useEffect(() => {
+    fetchUsers(tenantFilter || undefined);
+  }, [tenantFilter]);
 
   const filtered = users.filter(u => {
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
@@ -105,6 +117,15 @@ export default function UsersFullPage() {
     setConfirmDelete(null);
   };
 
+  const activeTenantName = tenantFilter ? (tenants.find(t => t.id === tenantFilter)?.name ?? 'Tenant') : null;
+
+  const ROLE_LABELS: Record<UserRole, string> = {
+    superadmin: 'Superadmin',
+    admin: 'Admin',
+    operator: 'Operator',
+    viewer: 'Viewer',
+  };
+
   return (
     <AppLayout>
       <div style={{ flex: 1, overflow: 'auto', padding: '32px 40px', background: '#050d1a' }}>
@@ -121,26 +142,29 @@ export default function UsersFullPage() {
                 fontFamily: 'DM Sans, sans-serif',
               }}
             >
-              <ArrowLeft size={14} /> Dashboard
+              <ArrowLeft size={14} /> {t('common.dashboard')}
             </button>
             <div>
               <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 24, color: '#e8eaf0' }}>
-                User Management
+                {t('users.title')}
               </div>
               <div style={{ fontSize: 13, color: '#5d7a9a', marginTop: 3, fontFamily: 'DM Sans, sans-serif' }}>
-                Control portal access, roles, and permissions
+                {isSuperadmin && activeTenantName
+                  ? <>{t('users.filtering_by')} <span style={{ color: '#f59e0b', fontWeight: 600 }}>{activeTenantName}</span></>
+                  : t('users.subtitle')
+                }
               </div>
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={() => fetchUsers()} style={{
+            <button onClick={() => fetchUsers(tenantFilter || undefined)} style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px',
               background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)',
               borderRadius: 8, color: '#8da4c2', cursor: 'pointer', fontSize: 13,
               fontFamily: 'DM Sans, sans-serif',
             }}>
-              <RefreshCw size={14} /> Refresh
+              <RefreshCw size={14} /> {t('users.refresh')}
             </button>
             {canCreate && (
               <button onClick={() => setModalUser(null)} style={{
@@ -148,7 +172,7 @@ export default function UsersFullPage() {
                 borderRadius: 8, border: 'none', background: '#00d4e8', color: '#050d1a',
                 fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, cursor: 'pointer',
               }}>
-                <UserPlus size={15} /> New User
+                <UserPlus size={15} /> {t('users.new_user')}
               </button>
             )}
           </div>
@@ -156,12 +180,12 @@ export default function UsersFullPage() {
 
         {/* ── Stats row ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 28 }}>
-          <StatCard icon={<Users size={18} />}    label="Total users"   value={counts.total}      color="#00d4e8" />
-          <StatCard icon={<Activity size={18} />} label="Active"        value={counts.active}     color="#22c55e" />
-          <StatCard icon={<Shield size={18} />}   label="Superadmins"   value={counts.superadmin} color="#f59e0b" />
-          <StatCard icon={<Shield size={18} />}   label="Admins"        value={counts.admin}      color="#a78bfa" />
-          <StatCard icon={<Users size={18} />}    label="Operators"     value={counts.operator}   color="#00d4e8" />
-          <StatCard icon={<Users size={18} />}    label="Viewers"       value={counts.viewer}     color="#64748b" />
+          <StatCard icon={<Users size={18} />}    label={t('users.total_users')}  value={counts.total}      color="#00d4e8" />
+          <StatCard icon={<Activity size={18} />} label={t('users.active')}       value={counts.active}     color="#22c55e" />
+          <StatCard icon={<Shield size={18} />}   label={t('users.superadmins')}  value={counts.superadmin} color="#f59e0b" />
+          <StatCard icon={<Shield size={18} />}   label={t('users.admins')}       value={counts.admin}      color="#a78bfa" />
+          <StatCard icon={<Users size={18} />}    label={t('users.operators')}    value={counts.operator}   color="#00d4e8" />
+          <StatCard icon={<Users size={18} />}    label={t('users.viewers')}      value={counts.viewer}     color="#64748b" />
         </div>
 
         {/* ── Error banner ── */}
@@ -191,7 +215,7 @@ export default function UsersFullPage() {
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search name or email..."
+                placeholder={t('users.search_placeholder')}
                 style={{
                   width: '100%', padding: '8px 12px 8px 32px',
                   background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)',
@@ -215,7 +239,7 @@ export default function UsersFullPage() {
                     color: active ? (meta?.color || '#00d4e8') : '#5d7a9a',
                     transition: 'all .15s',
                   }}>
-                    {r === 'all' ? 'All' : ROLE_META[r].label} <span style={{ opacity: 0.7 }}>{count}</span>
+                    {r === 'all' ? t('users.role_all') : ROLE_LABELS[r]} <span style={{ opacity: 0.7 }}>{count}</span>
                   </button>
                 );
               })}
@@ -231,34 +255,34 @@ export default function UsersFullPage() {
             fontSize: 10, color: '#3a5070', letterSpacing: 1,
             textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif',
           }}>
-            <div>User</div>
-            <div>Role</div>
-            <div>Status</div>
-            <div>Last login</div>
-            <div>Member since</div>
-            <div style={{ textAlign: 'right' }}>Actions</div>
+            <div>{t('users.col_user')}</div>
+            <div>{t('users.col_role')}</div>
+            <div>{t('users.col_status')}</div>
+            <div>{t('users.col_last_login')}</div>
+            <div>{t('users.col_member_since')}</div>
+            <div style={{ textAlign: 'right' }}>{t('users.col_actions')}</div>
           </div>
 
           {/* Loading */}
           {isLoading && (
             <div style={{ padding: '48px 20px', textAlign: 'center', color: '#5d7a9a', fontSize: 14, fontFamily: 'DM Sans, sans-serif' }}>
-              Loading users...
+              {t('users.loading')}
             </div>
           )}
 
           {/* Empty */}
           {!isLoading && filtered.length === 0 && (
             <div style={{ padding: '48px 20px', textAlign: 'center', color: '#5d7a9a', fontSize: 14, fontFamily: 'DM Sans, sans-serif' }}>
-              {search ? 'No users match your search' : 'No users found'}
+              {search ? t('users.no_match') : t('users.no_users')}
             </div>
           )}
 
           {/* Rows */}
           {!isLoading && filtered.map((u, idx) => {
-            const isMe     = u.id === currentUser?.id;
-            const canEdit  = isSuperadmin || (currentUser?.role === 'admin' && u.role !== 'superadmin' && u.role !== 'admin');
+            const isMe      = u.id === currentUser?.id;
+            const canEdit   = isSuperadmin || (currentUser?.role === 'admin' && u.role !== 'superadmin' && u.role !== 'admin');
             const canToggle = canEdit && !isMe;
-            const canDel   = isSuperadmin && !isMe;
+            const canDel    = isSuperadmin && !isMe;
 
             return (
               <div
@@ -285,7 +309,7 @@ export default function UsersFullPage() {
                       </span>
                       {isMe && (
                         <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 3, background: 'rgba(0,212,232,.15)', color: '#00d4e8', fontWeight: 700, letterSpacing: 0.5, flexShrink: 0 }}>
-                          YOU
+                          {t('users.you')}
                         </span>
                       )}
                     </div>
@@ -294,6 +318,9 @@ export default function UsersFullPage() {
                     </div>
                     {u.phone && (
                       <div style={{ fontSize: 11, color: '#3a5070', fontFamily: 'JetBrains Mono, monospace', marginTop: 1 }}>{u.phone}</div>
+                    )}
+                    {isSuperadmin && u.tenant_name && (
+                      <div style={{ fontSize: 10, color: '#f59e0b', fontFamily: 'DM Sans, sans-serif', marginTop: 1, opacity: 0.8 }}>{u.tenant_name}</div>
                     )}
                   </div>
                 </div>
@@ -310,13 +337,13 @@ export default function UsersFullPage() {
                     border: `1px solid ${u.is_active ? 'rgba(34,197,94,.3)' : 'rgba(239,68,68,.3)'}`,
                     fontFamily: 'DM Sans, sans-serif',
                   }}>
-                    {u.is_active ? 'Active' : 'Inactive'}
+                    {u.is_active ? t('users.status_active') : t('users.status_inactive')}
                   </span>
                 </div>
 
                 {/* Last login */}
                 <div style={{ fontSize: 12, color: '#5d7a9a', fontFamily: 'JetBrains Mono, monospace' }}>
-                  {u.last_login ? timeAgo(u.last_login) : <span style={{ color: '#3a5070' }}>Never</span>}
+                  {u.last_login ? timeAgo(u.last_login) : <span style={{ color: '#3a5070' }}>{t('users.never')}</span>}
                 </div>
 
                 {/* Created */}
@@ -327,13 +354,13 @@ export default function UsersFullPage() {
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                   {canEdit && (
-                    <button onClick={() => { setActionError(''); setModalUser(u); }} title="Edit user" style={{
+                    <button onClick={() => { setActionError(''); setModalUser(u); }} title={t('users.edit')} style={{
                       display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
                       borderRadius: 6, border: '1px solid rgba(255,255,255,.1)',
                       background: 'rgba(255,255,255,.04)', color: '#8da4c2',
                       cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif',
                     }}>
-                      <Pencil size={12} /> Edit
+                      <Pencil size={12} /> {t('users.edit')}
                     </button>
                   )}
                   {canToggle && (
@@ -348,7 +375,7 @@ export default function UsersFullPage() {
                     </button>
                   )}
                   {canDel && (
-                    <button onClick={() => { setActionError(''); setConfirmDelete(u); }} title="Delete" style={{
+                    <button onClick={() => { setActionError(''); setConfirmDelete(u); }} title={t('common.delete')} style={{
                       display: 'flex', alignItems: 'center', padding: '6px 8px',
                       borderRadius: 6, border: '1px solid rgba(239,68,68,.2)',
                       background: 'rgba(239,68,68,.08)', color: '#ef4444', cursor: 'pointer',
@@ -397,10 +424,10 @@ export default function UsersFullPage() {
               </div>
               <div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: '#e8eaf0', marginBottom: 6 }}>
-                  Delete this user?
+                  {t('users.delete_title')}
                 </div>
                 <div style={{ fontSize: 13, color: '#8da4c2', fontFamily: 'DM Sans, sans-serif', lineHeight: 1.6 }}>
-                  <strong style={{ color: '#e8eaf0' }}>{confirmDelete.full_name}</strong> ({confirmDelete.email}) will be permanently removed and will no longer be able to log in. This cannot be undone.
+                  <strong style={{ color: '#e8eaf0' }}>{confirmDelete.full_name}</strong> ({confirmDelete.email}) {t('users.delete_body')}
                 </div>
               </div>
             </div>
@@ -410,14 +437,14 @@ export default function UsersFullPage() {
                 background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)',
                 color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13,
               }}>
-                Cancel
+                {t('users.cancel')}
               </button>
               <button onClick={() => handleDelete(confirmDelete)} style={{
                 flex: 1, padding: '11px', borderRadius: 8, border: 'none',
                 background: '#ef4444', color: '#fff', cursor: 'pointer',
                 fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13,
               }}>
-                Delete User
+                {t('users.confirm_delete')}
               </button>
             </div>
           </div>
