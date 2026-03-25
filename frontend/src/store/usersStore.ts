@@ -12,6 +12,8 @@ export interface PortalUser {
   phone?: string;
   last_login?: string;
   created_at: string;
+  tenant_id?: string;
+  tenant_name?: string;
 }
 
 export interface CreateUserPayload {
@@ -20,6 +22,7 @@ export interface CreateUserPayload {
   full_name: string;
   role: UserRole;
   phone?: string;
+  tenant_id?: string | null;   // required for superadmin creating non-superadmin users
 }
 
 export interface UpdateUserPayload {

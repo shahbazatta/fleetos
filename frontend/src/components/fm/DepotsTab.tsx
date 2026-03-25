@@ -181,7 +181,7 @@ function AssignToDepotModal({ depot, onClose }: { depot: Depot; onClose: () => v
 }
 
 export default function DepotsTab() {
-  const { depots, createDepot, updateDepot, deleteDepot } = useFMStore();
+  const { depots, createDepot, updateDepot, deleteDepot: deleteDepotAction } = useFMStore();
   const { user } = useAuthStore();
   const canManage = ['admin', 'superadmin'].includes(user?.role || '');
   const canAssign = ['admin', 'superadmin', 'operator'].includes(user?.role || '');
@@ -189,7 +189,7 @@ export default function DepotsTab() {
   const [search,      setSearch]      = useState('');
   const [editDepot,   setEditDepot]   = useState<Depot | null | undefined>(undefined);
   const [assignDepot, setAssignDepot] = useState<Depot | null>(null);
-//  const [deleteDepot, setDeleteDepot] = useState<Depot | null>(null);
+  const [deleteDepot, setDeleteDepot] = useState<Depot | null>(null);
   const [error,       setError]       = useState('');
 
   const filtered = depots.filter(d => {
@@ -199,10 +199,16 @@ export default function DepotsTab() {
 
   const handleDelete = async () => {
     if (!deleteDepot) return;
-    const result = await (useFMStore.getState()).deleteDepot(deleteDepot.id);
-    if (!result.ok) setError(result.error || 'Delete failed');
-    setDeleteDepot(null);
-  };
+
+    const result = await deleteDepotAction(deleteDepot.id);   // Use the renamed action
+
+    if (result.ok) {
+        setDeleteDepot(null);           // Close the modal
+        // Optional: show success toast
+    } else {
+        setError(result.error || 'Failed to delete depot');
+    }
+};
 
   return (
     <div>
@@ -265,7 +271,21 @@ export default function DepotsTab() {
             <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: `1px solid ${C.borderW}` }}>
               {canAssign && <button onClick={() => setAssignDepot(d)} style={{ flex: 1, padding: '7px', borderRadius: 7, border: `1px solid ${C.border}`, background: 'rgba(0,212,232,.08)', color: C.cyan, cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}>Manage Assignments</button>}
               {canManage && <button onClick={() => setEditDepot(d)} style={{ padding: '7px 10px', borderRadius: 7, border: `1px solid ${C.borderW}`, background: 'rgba(255,255,255,.04)', color: '#8da4c2', cursor: 'pointer', fontSize: 12 }}>Edit</button>}
-              {canManage && <button onClick={() => setDeleteDepot(d)} style={{ padding: '7px 8px', borderRadius: 7, border: '1px solid rgba(239,68,68,.2)', background: 'rgba(239,68,68,.08)', color: C.red, cursor: 'pointer' }}><span style={{ fontSize: 12 }}>✕</span></button>}
+              {canManage && (
+                <button 
+                  onClick={() => setDeleteDepot(d)}
+                  style={{
+                      padding: '7px 8px',
+                      borderRadius: 7,
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      color: C.red,
+                      cursor: 'pointer'
+                  }}
+                >
+                    <span style={{ fontSize: 12 }}>✕</span>
+                </button>
+                )}
             </div>
           </div>
         ))}
@@ -273,7 +293,14 @@ export default function DepotsTab() {
 
       {editDepot !== undefined && <DepotForm depot={editDepot} onSave={editDepot ? (p) => updateDepot(editDepot.id, p) : createDepot} onClose={() => setEditDepot(undefined)} />}
       {assignDepot && <AssignToDepotModal depot={assignDepot} onClose={() => setAssignDepot(null)} />}
-      {deleteDepot && <ConfirmDelete name={deleteDepot.name} entity="depot" onConfirm={handleDelete} onCancel={() => setDeleteDepot(null)} />}
+      {deleteDepot && (
+      <ConfirmDelete 
+        name={deleteDepot.name} 
+        entity="depot" 
+        onConfirm={handleDelete} 
+        onCancel={() => setDeleteDepot(null)} 
+      />
+      )}
     </div>
   );
 }
