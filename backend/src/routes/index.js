@@ -246,7 +246,7 @@ authRouter.post('/login', async (req, res) => {
   try {
     const result = await query(`
       SELECT u.*, t.name AS tenant_name, t.slug AS tenant_slug, t.is_active AS tenant_active,
-             t.plan, t.max_vehicles, t.max_users, t.settings
+             t.plan, t.max_vehicles, t.max_users, t.settings, t.city, t.country
       FROM users u
       LEFT JOIN tenants t ON u.tenant_id = t.id
       WHERE u.email = $1 AND u.is_active = true
@@ -296,6 +296,8 @@ authRouter.post('/login', async (req, res) => {
           max_vehicles: user.max_vehicles,
           max_users:    user.max_users,
           settings:     user.settings,
+          city:         user.city    || null,
+          country:      user.country || null,
         } : null,
       },
     });

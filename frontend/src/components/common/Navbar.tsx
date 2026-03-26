@@ -174,7 +174,8 @@ export default function Navbar() {
               <div style={{ padding: '6px 14px 4px', fontSize: 10, color: '#3a5070', letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif' }}>{t('common.filter_by_tenant')}</div>
               <DropItem label={t('common.all_tenants')} active={!tenantFilter} onClick={() => setTenantFilter(null)} />
               {tenants.filter(t => t.is_active).map(tenant => (
-                <DropItem key={tenant.id} label={tenant.name} active={tenantFilter === tenant.id} onClick={() => setTenantFilter(tenant.id)} />
+                <DropItem key={tenant.id} label={tenant.name} active={tenantFilter === tenant.id}
+                  onClick={() => setTenantFilter(tenant.id, tenant.city, tenant.country)} />
               ))}
             </Dropdown>
             <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,.08)' }} />

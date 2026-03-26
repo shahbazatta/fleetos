@@ -2,6 +2,34 @@ import { create } from 'zustand';
 import type { Vehicle, Alert, Geofence, Driver, FleetSummary, WsMessage } from '../types';
 import api from '../services/api';
 
+// City → map center lookup (lng, lat, zoom)
+const CITY_COORDS: Record<string, { longitude: number; latitude: number; zoom: number }> = {
+  'riyadh':       { longitude: 46.7132, latitude: 24.6877, zoom: 11 },
+  'jeddah':       { longitude: 39.1925, latitude: 21.4858, zoom: 11 },
+  'dammam':       { longitude: 50.1033, latitude: 26.4367, zoom: 12 },
+  'dubai':        { longitude: 55.2963, latitude: 25.2048, zoom: 11 },
+  'abu dhabi':    { longitude: 54.3773, latitude: 24.4539, zoom: 11 },
+  'sharjah':      { longitude: 55.3781, latitude: 25.3463, zoom: 12 },
+  'doha':         { longitude: 51.5310, latitude: 25.2854, zoom: 12 },
+  'muscat':       { longitude: 58.5900, latitude: 23.6140, zoom: 12 },
+  'kuwait city':  { longitude: 47.9783, latitude: 29.3697, zoom: 12 },
+  'kuwait':       { longitude: 47.9783, latitude: 29.3697, zoom: 12 },
+  'manama':       { longitude: 50.5860, latitude: 26.2154, zoom: 13 },
+  'bahrain':      { longitude: 50.5860, latitude: 26.2154, zoom: 12 },
+  'lahore':       { longitude: 74.3587, latitude: 31.5204, zoom: 12 },
+  'karachi':      { longitude: 67.0099, latitude: 24.8607, zoom: 11 },
+  'islamabad':    { longitude: 73.0479, latitude: 33.6844, zoom: 12 },
+  'cairo':        { longitude: 31.2357, latitude: 30.0444, zoom: 11 },
+  'amman':        { longitude: 35.9106, latitude: 31.9539, zoom: 12 },
+  'beirut':       { longitude: 35.4952, latitude: 33.8886, zoom: 13 },
+};
+
+function cityCoords(city?: string | null, country?: string | null) {
+  if (!city && !country) return null;
+  const key = (city || country || '').toLowerCase().trim();
+  return CITY_COORDS[key] ?? null;
+}
+
 interface FleetStore {
   // State
   vehicles: Vehicle[];
@@ -27,7 +55,8 @@ interface FleetStore {
   fetchDrivers: () => Promise<void>;
   fetchSummary: () => Promise<void>;
   fetchAll: () => Promise<void>;
-  setTenantFilter: (id: string | null) => void;
+  setTenantFilter: (id: string | null, city?: string | null, country?: string | null) => void;
+  flyToTenant: (city?: string | null, country?: string | null) => void;
   selectVehicle: (id: string | null) => void;
   updateVehicleTelemetry: (updates: WsMessage['vehicles']) => void;
   addAlert: (alert: Alert) => void;
@@ -113,10 +142,17 @@ export const useFleetStore = create<FleetStore>((set, get) => ({
     ]);
   },
 
-  setTenantFilter: (id) => {
+  setTenantFilter: (id, city, country) => {
     set({ tenantFilter: id, selectedVehicleId: null });
-    // Re-fetch everything with new tenant scope
+    if (city || country) get().flyToTenant(city, country);
     setTimeout(() => get().fetchAll(), 0);
+  },
+
+  flyToTenant: (city, country) => {
+    const coords = cityCoords(city, country);
+    if (coords) {
+      set(s => ({ mapViewState: { ...s.mapViewState, ...coords, pitch: 45, bearing: 0 } }));
+    }
   },
 
   selectVehicle: (id) => {

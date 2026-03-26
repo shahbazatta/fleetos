@@ -17,9 +17,15 @@ export default function DashboardPage() {
   const [drawOpen, setDrawOpen] = useState(false);
   const [editingGeofence, setEditingGeofence] = useState<Geofence | null>(null);
 
+  const { flyToTenant } = useFleetStore();
+
   useEffect(() => {
     Promise.all([fetchVehicles(), fetchAlerts(), fetchGeofences(), fetchDrivers(), fetchSummary()]);
     connectWs();
+    // Fly to the logged-in user's tenant city on first load
+    if (user?.tenant) {
+      flyToTenant(user.tenant.city, user.tenant.country);
+    }
     const interval = setInterval(() => { fetchSummary(); fetchAlerts(); }, 30_000);
     return () => clearInterval(interval);
   }, []);

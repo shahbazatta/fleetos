@@ -9,6 +9,8 @@ export interface TenantInfo {
   max_vehicles: number;
   max_users: number;
   settings?: Record<string, any>;
+  city?: string | null;
+  country?: string | null;
 }
 
 export interface AuthUser {
