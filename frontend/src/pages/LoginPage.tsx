@@ -30,7 +30,7 @@ export default function LoginPage() {
     const ok = await login(email, password);
     if (ok) navigate('/', { replace: true });
   };
-
+const API_URL = 'https://20.153.153.24';
   const handleSignupSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
@@ -40,7 +40,10 @@ export default function LoginPage() {
   }
 
   try {
-    const res = await fetch('/api/request-access', {   // or full URL: 'http://localhost:5000/api/request-access'
+    const apiBase = import.meta.env.VITE_API_URL || '';
+      const res = await fetch('/api/request-access', {   // or full URL: 'http://localhost:5000/api/request-access'
+        // fleet.cloudnext.solutions UNCOMMENT WHILE DEPLOY TO WEBSITE
+      //const res = await fetch(`${apiBase}/api/request-access`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

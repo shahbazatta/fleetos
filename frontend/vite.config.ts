@@ -8,6 +8,8 @@ export default defineConfig({
     proxy: {
       '/api': { target: 'http://localhost:3001', changeOrigin: true },
       '/ws':  { target: 'ws://localhost:3001',  ws: true },
+      //'/api': { target: 'http://api.fleet.cloudnext.solutions:3001', changeOrigin: true },
+      //'/ws':  { target: 'ws://api.fleet.cloudnext.solutions:3001',  ws: true },
     },
   },
   resolve: {
