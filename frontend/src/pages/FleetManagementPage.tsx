@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Users, Truck, MapPin, Warehouse, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Users, Truck, MapPin, Warehouse, ArrowLeft, RefreshCw, Route } from 'lucide-react';
 import { useFMStore } from '../store/fmStore';
 import { useAuthStore } from '../store/authStore';
 import { useFleetStore } from '../store/fleetStore';
@@ -11,9 +11,10 @@ import DriversTab   from '../components/fm/DriversTab';
 import VehiclesTab  from '../components/fm/VehiclesTab';
 import GeofencesTab from '../components/fm/GeofencesTab';
 import DepotsTab    from '../components/fm/DepotsTab';
+import RoutesTab    from '../components/fm/RoutesTab';
 import { C } from '../components/fm/FMShared';
 
-type Tab = 'drivers' | 'vehicles' | 'geofences' | 'depots';
+type Tab = 'drivers' | 'vehicles' | 'geofences' | 'depots' | 'routes';
 
 export default function FleetManagementPage() {
   const { t } = useTranslation();
@@ -31,6 +32,7 @@ export default function FleetManagementPage() {
     { id: 'vehicles',  icon: <Truck     size={15} />, label: t('fleet_mgmt.tabs.vehicles'),  summaryKey: 'vehicles'  },
     { id: 'geofences', icon: <MapPin    size={15} />, label: t('fleet_mgmt.tabs.geofences'), summaryKey: 'geofences' },
     { id: 'depots',    icon: <Warehouse size={15} />, label: t('fleet_mgmt.tabs.depots'),    summaryKey: 'depots'    },
+    { id: 'routes',    icon: <Route     size={15} />, label: 'Routes',                       summaryKey: 'routes'    },
   ];
 
   useEffect(() => {
@@ -80,6 +82,7 @@ export default function FleetManagementPage() {
               {/* Summary pills */}
               {summary && TABS.map(tab => {
                 const s = summary[tab.summaryKey];
+                if (!s) return null;
                 return (
                   <div key={tab.id} style={{ textAlign: 'center' }}>
                     <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 20, fontWeight: 700, color: C.cyan, lineHeight: 1 }}>{s.total}</div>
@@ -135,6 +138,7 @@ export default function FleetManagementPage() {
           {activeTab === 'vehicles'  && <VehiclesTab />}
           {activeTab === 'geofences' && <GeofencesTab />}
           {activeTab === 'depots'    && <DepotsTab />}
+          {activeTab === 'routes'    && <RoutesTab />}
         </div>
       </div>
 

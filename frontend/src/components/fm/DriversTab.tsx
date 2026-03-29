@@ -133,6 +133,46 @@ function AssignDriverModal({ driver, onClose }: { driver: FMDriver; onClose: () 
   );
 }
 
+function CredentialsModal({ credentials, onClose }: {
+  credentials: { email: string; password: string; note: string };
+  onClose: () => void;
+}) {
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedPwd, setCopiedPwd] = useState(false);
+  const copyEmail = () => { navigator.clipboard.writeText(credentials.email); setCopiedEmail(true); setTimeout(() => setCopiedEmail(false), 2000); };
+  const copyPwd = () => { navigator.clipboard.writeText(credentials.password); setCopiedPwd(true); setTimeout(() => setCopiedPwd(false), 2000); };
+
+  return (
+    <Modal title="Mobile App Credentials" subtitle="Driver credentials for the mobile app" onClose={onClose} width={440}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ padding: '12px 16px', borderRadius: 8, background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.2)', fontSize: 12, color: '#fcd34d', lineHeight: 1.6 }}>
+          {credentials.note}
+        </div>
+        <div>
+          <label style={lbl}>Login Email</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input readOnly value={credentials.email} style={{ ...inp, flex: 1, fontFamily: 'JetBrains Mono, monospace' }} />
+            <button onClick={copyEmail} style={{ padding: '9px 14px', borderRadius: 7, border: 'none', background: copiedEmail ? C.green : C.cyan, color: C.bg, cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 12 }}>{copiedEmail ? '✓' : 'Copy'}</button>
+          </div>
+        </div>
+        <div>
+          <label style={lbl}>Password</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input readOnly value={credentials.password} style={{ ...inp, flex: 1, fontFamily: 'JetBrains Mono, monospace' }} />
+            <button onClick={copyPwd} style={{ padding: '9px 14px', borderRadius: 7, border: 'none', background: copiedPwd ? C.green : C.cyan, color: C.bg, cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 12 }}>{copiedPwd ? '✓' : 'Copy'}</button>
+          </div>
+        </div>
+        <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>
+          Share these credentials with the driver to access the CloudNext mobile app. The driver should change their password on first login.
+        </div>
+        <button onClick={onClose} style={{ padding: '11px', borderRadius: 8, border: 'none', background: C.cyan, color: C.bg, cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14 }}>
+          Done
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 export default function DriversTab() {
   const { drivers, createDriver, updateDriver, deleteDriver } = useFMStore();
   const { user } = useAuthStore();
@@ -144,6 +184,7 @@ export default function DriversTab() {
   const [assignDrv,  setAssignDrv]  = useState<FMDriver | null>(null);
   const [deleteDrv,  setDeleteDrv]  = useState<FMDriver | null>(null);
   const [error,      setError]      = useState('');
+  const [newDriverCreds, setNewDriverCreds] = useState<any>(null);
 
   const filtered = drivers.filter(d => {
     const q = search.toLowerCase();
@@ -221,12 +262,19 @@ export default function DriversTab() {
       {editDriver !== undefined && (
         <DriverForm
           driver={editDriver}
-          onSave={editDriver ? (p) => updateDriver(editDriver.id, p) : createDriver}
+          onSave={editDriver ? (p) => updateDriver(editDriver.id, p) : async (p) => {
+            const result = await createDriver(p);
+            if (result.ok && (result as any).mobile_credentials) {
+              setNewDriverCreds((result as any).mobile_credentials);
+            }
+            return result;
+          }}
           onClose={() => setEditDriver(undefined)}
         />
       )}
       {assignDrv && <AssignDriverModal driver={assignDrv} onClose={() => setAssignDrv(null)} />}
       {deleteDrv && <ConfirmDelete name={deleteDrv.full_name} entity="driver" onConfirm={handleDelete} onCancel={() => setDeleteDrv(null)} />}
+      {newDriverCreds && <CredentialsModal credentials={newDriverCreds} onClose={() => setNewDriverCreds(null)} />}
     </div>
   );
 }

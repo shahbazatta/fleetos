@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Truck, Search } from 'lucide-react';
 import { useFMStore, type FMVehicle } from '../../store/fmStore';
 import { useAuthStore } from '../../store/authStore';
-import { Modal, ConfirmDelete, ErrorBanner, FormRow, FormField, SaveButton, CancelButton, StatusBadge, Table, TR, TD, ActionButtons, inp, lbl, sel, C } from './FMShared';
+import { Modal, ConfirmDelete, ErrorBanner, FormRow, FormField, SaveButton, CancelButton, StatusBadge, Table, TR, TD, inp, lbl, sel, C } from './FMShared';
+import { AssignRouteModal } from './RoutesTab';
 
 const V_TYPES  = ['truck', 'van', 'car', 'bus', 'motorcycle', 'heavy'];
 const V_STATUS = ['active', 'idle', 'offline', 'maintenance', 'alert'];
@@ -139,6 +140,34 @@ function AssignDriverModal({ vehicle, onClose }: { vehicle: FMVehicle; onClose: 
   );
 }
 
+function QrCodeModal({ vehicle, onClose }: { vehicle: FMVehicle; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(vehicle.qr_code || '').then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
+  return (
+    <Modal title="Vehicle QR Code" subtitle={`QR for ${vehicle.registration}`} onClose={onClose} width={400}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
+        <div style={{ padding: 20, background: 'rgba(0,212,232,.05)', border: `1px solid ${C.border}`, borderRadius: 12, textAlign: 'center', width: '100%' }}>
+          <div style={{ fontSize: 11, color: C.muted, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>QR Payload</div>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: C.cyan, wordBreak: 'break-all', padding: '12px 16px', background: 'rgba(0,212,232,.08)', borderRadius: 8, border: `1px solid ${C.border}` }}>
+            {vehicle.qr_code || 'No QR code assigned'}
+          </div>
+          <div style={{ fontSize: 11, color: C.muted, marginTop: 12, lineHeight: 1.6 }}>
+            This payload is encoded in the physical QR code printed on the bus. Driver scans it to pair with this vehicle.
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'rgba(255,255,255,.04)', border: `1px solid rgba(255,255,255,.07)`, color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Close</button>
+          <button onClick={copy} style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: copied ? C.green : C.cyan, color: C.bg, cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14 }}>
+            {copied ? '✓ Copied!' : 'Copy QR Payload'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 export default function VehiclesTab() {
   const { vehicles, createVehicle, updateVehicle, deleteVehicle } = useFMStore();
   const { user } = useAuthStore();
@@ -149,6 +178,8 @@ export default function VehiclesTab() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [editVeh,    setEditVeh]    = useState<FMVehicle | null | undefined>(undefined);
   const [assignVeh,  setAssignVeh]  = useState<FMVehicle | null>(null);
+  const [routeVeh,   setRouteVeh]   = useState<FMVehicle | null>(null);
+  const [qrVeh,      setQrVeh]      = useState<FMVehicle | null>(null);
   const [deleteVeh,  setDeleteVeh]  = useState<FMVehicle | null>(null);
   const [error,      setError]      = useState('');
 
@@ -190,7 +221,7 @@ export default function VehiclesTab() {
 
       {error && <ErrorBanner message={error} onDismiss={() => setError('')} />}
 
-      <Table headers={['Vehicle', 'Type', 'Status', 'Fuel', 'Driver', 'Depot', 'Health', 'Insurance', '']}>
+      <Table headers={['Vehicle', 'Type', 'Status', 'Fuel', 'Driver', 'Route', 'Health', 'Insurance', '']}>
         {filtered.length === 0 && <tr><td colSpan={9} style={{ padding: '40px 12px', textAlign: 'center', color: C.muted, fontFamily: 'DM Sans, sans-serif' }}>No vehicles found</td></tr>}
         {filtered.map(v => (
           <TR key={v.id}>
@@ -208,7 +239,11 @@ export default function VehiclesTab() {
                 ? <span style={{ fontSize: 12, color: C.text }}>{v.driver_name}</span>
                 : <span style={{ fontSize: 11, color: C.dim }}>Unassigned</span>}
             </TD>
-            <TD muted>{v.depot_name || '—'}</TD>
+            <TD>
+              {v.route_name
+                ? <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, background: 'rgba(0,212,232,.1)', color: C.cyan, borderLeft: `3px solid ${v.route_color || C.cyan}`, paddingLeft: 8 }}>{v.route_name}</span>
+                : <span style={{ color: C.dim, fontSize: 11 }}>No Route</span>}
+            </TD>
             <TD mono>
               {v.health_score != null
                 ? <span style={{ color: v.health_score >= 80 ? C.green : v.health_score >= 60 ? C.amber : C.red }}>{Math.round(v.health_score)}</span>
@@ -220,12 +255,31 @@ export default function VehiclesTab() {
                 : '—'}
             </TD>
             <TD right>
-              <ActionButtons
-                onAssign={canEdit ? () => setAssignVeh(v) : undefined}
-                assignLabel="Assign Driver"
-                onEdit={canManage ? () => setEditVeh(v) : undefined}
-                onDelete={canManage ? () => setDeleteVeh(v) : undefined}
-              />
+              <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                {canEdit && (
+                  <>
+                    <button onClick={e => { e.stopPropagation(); setAssignVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid rgba(255,255,255,.07)`, background: 'rgba(255,255,255,.04)', color: C.cyan, cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
+                      Assign Driver
+                    </button>
+                    <button onClick={e => { e.stopPropagation(); setRouteVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid rgba(0,212,232,.2)`, background: 'rgba(0,212,232,.06)', color: C.cyan, cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
+                      Route
+                    </button>
+                    <button onClick={e => { e.stopPropagation(); setQrVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid rgba(255,255,255,.07)`, background: 'rgba(255,255,255,.04)', color: '#8da4c2', cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
+                      QR
+                    </button>
+                  </>
+                )}
+                {canManage && (
+                  <>
+                    <button onClick={e => { e.stopPropagation(); setEditVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid rgba(255,255,255,.07)`, background: 'rgba(255,255,255,.04)', color: '#8da4c2', cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
+                      Edit
+                    </button>
+                    <button onClick={e => { e.stopPropagation(); setDeleteVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid rgba(239,68,68,.25)`, background: 'rgba(239,68,68,.08)', color: C.red, cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
             </TD>
           </TR>
         ))}
@@ -233,6 +287,8 @@ export default function VehiclesTab() {
 
       {editVeh !== undefined && <VehicleForm vehicle={editVeh} onSave={editVeh ? (p) => updateVehicle(editVeh.id, p) : createVehicle} onClose={() => setEditVeh(undefined)} />}
       {assignVeh && <AssignDriverModal vehicle={assignVeh} onClose={() => setAssignVeh(null)} />}
+      {routeVeh && <AssignRouteModal vehicleId={routeVeh.id} vehicleReg={routeVeh.registration} currentRouteId={routeVeh.route_id} onClose={() => setRouteVeh(null)} />}
+      {qrVeh && <QrCodeModal vehicle={qrVeh} onClose={() => setQrVeh(null)} />}
       {deleteVeh && <ConfirmDelete name={deleteVeh.registration} entity="vehicle" onConfirm={handleDelete} onCancel={() => setDeleteVeh(null)} />}
     </div>
   );

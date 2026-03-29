@@ -10,6 +10,7 @@ const morgan      = require('morgan');
 const { alertsRouter, geofencesRouter, driversRouter, analyticsRouter, authRouter } = require('./routes/index');
 const vehiclesRouter    = require('./routes/vehicles');
 const fmRouter          = require('./routes/fleetManagement');
+const mobileRouter      = require('./routes/mobile');
 const usersRouter       = require('./routes/users');
 const tenantsRouter     = require('./routes/tenants');
 const { initWebSocket } = require('./services/websocket');
@@ -51,6 +52,7 @@ app.use('/api/drivers',   driversRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/vehicles',  vehiclesRouter);
 app.use('/api/fm',        fmRouter);
+app.use('/api/mobile',    mobileRouter);
 app.use('/api/users',     usersRouter);
 app.use('/api/tenants',   tenantsRouter);
 

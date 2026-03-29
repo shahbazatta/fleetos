@@ -38,6 +38,18 @@ export interface FMVehicle {
   insurance_expiry?: string; registration_expiry?: string;
   last_service_date?: string; next_service_km?: number;
   notes?: string;
+  route_id?: string; route_name?: string; route_color?: string;
+  qr_code?: string;
+}
+
+export interface FMRoute {
+  id: string; tenant_id: string;
+  name: string; description?: string;
+  color: string; is_active: boolean;
+  distance_km?: number; computed_distance_km?: number;
+  duration_min?: number;
+  vehicle_count?: number;
+  path_geojson?: GeoJSON.LineString;
 }
 
 export interface FMGeofence {
@@ -61,6 +73,7 @@ interface FMSummary {
   vehicles:  { total: number; active: number };
   geofences: { total: number; active: number };
   depots:    { total: number; active: number };
+  routes:    { total: number; active: number };
 }
 
 // ── Store ──────────────────────────────────────────────────────────────────
@@ -70,6 +83,7 @@ interface FMStore {
   vehicles:  FMVehicle[];
   geofences: FMGeofence[];
   depots:    Depot[];
+  routes:    FMRoute[];
   layers:    GeofenceLayer[];
   summary:   FMSummary | null;
   isLoading: boolean;
@@ -80,7 +94,7 @@ interface FMStore {
   fetchGeofencesOnly: (tenantId?: string) => Promise<void>;
 
   // Drivers
-  createDriver: (d: any) => Promise<{ ok: boolean; error?: string }>;
+  createDriver: (d: any) => Promise<{ ok: boolean; error?: string; mobile_credentials?: any }>;
   updateDriver: (id: string, d: any) => Promise<{ ok: boolean; error?: string }>;
   deleteDriver: (id: string) => Promise<{ ok: boolean; error?: string }>;
   assignDriver: (driverId: string, vehicleId: string | null) => Promise<{ ok: boolean; error?: string }>;
@@ -101,6 +115,12 @@ interface FMStore {
   updateDepot: (id: string, d: any) => Promise<{ ok: boolean; error?: string }>;
   deleteDepot: (id: string) => Promise<{ ok: boolean; error?: string }>;
 
+  // Routes
+  createRoute: (r: any) => Promise<{ ok: boolean; error?: string }>;
+  updateRoute: (id: string, r: any) => Promise<{ ok: boolean; error?: string }>;
+  deleteRoute: (id: string) => Promise<{ ok: boolean; error?: string }>;
+  assignVehicleRoute: (vehicleId: string, routeId: string | null) => Promise<{ ok: boolean; error?: string }>;
+
   // Layers (client-side, persisted to localStorage)
   createLayer:  (name: string, color: string, description?: string) => void;
   updateLayer:  (id: string, patch: Partial<GeofenceLayer>) => void;
@@ -115,19 +135,20 @@ interface FMStore {
 const storageKey = (tenantId: string) => `fleet_layers_${tenantId}`;
 
 export const useFMStore = create<FMStore>((set, get) => ({
-  drivers: [], vehicles: [], geofences: [], depots: [],
+  drivers: [], vehicles: [], geofences: [], depots: [], routes: [],
   layers: [], summary: null, isLoading: false, error: null,
 
   fetchAll: async (tenantId?: string) => {
     set({ isLoading: true, error: null });
     try {
       const qs = tenantId ? `?tenant_id=${tenantId}` : '';
-      const [dr, veh, geo, dep, sum] = await Promise.all([
+      const [dr, veh, geo, dep, sum, rts] = await Promise.all([
         api.get(`/fm/drivers${qs}`),
         api.get(`/fm/vehicles${qs}`),
         api.get(`/fm/geofences${qs}`),
         api.get(`/fm/depots${qs}`),
         api.get(`/fm/summary${qs}`),
+        api.get(`/fm/routes${qs}`),
       ]);
       set({
         drivers:   dr.data.drivers,
@@ -135,6 +156,7 @@ export const useFMStore = create<FMStore>((set, get) => ({
         geofences: geo.data.geofences,
         depots:    dep.data.depots,
         summary:   sum.data,
+        routes:    rts.data.routes,
         isLoading: false,
       });
     } catch (err: any) {
@@ -159,7 +181,7 @@ export const useFMStore = create<FMStore>((set, get) => ({
     try {
       const { data } = await api.post('/fm/drivers', payload);
       set(s => ({ drivers: [...s.drivers, data.driver] }));
-      return { ok: true };
+      return { ok: true, mobile_credentials: data.mobile_credentials };
     } catch (e: any) { return { ok: false, error: e.response?.data?.error || 'Error' }; }
   },
   updateDriver: async (id, payload) => {
@@ -259,6 +281,36 @@ export const useFMStore = create<FMStore>((set, get) => ({
     try {
       await api.delete(`/fm/depots/${id}`);
       set(s => ({ depots: s.depots.filter(d => d.id !== id) }));
+      return { ok: true };
+    } catch (e: any) { return { ok: false, error: e.response?.data?.error || 'Error' }; }
+  },
+
+  // ── Routes ───────────────────────────────────────────────────
+  createRoute: async (payload) => {
+    try {
+      const { data } = await api.post('/fm/routes', payload);
+      set(s => ({ routes: [...s.routes, data.route] }));
+      return { ok: true };
+    } catch (e: any) { return { ok: false, error: e.response?.data?.error || 'Error' }; }
+  },
+  updateRoute: async (id, payload) => {
+    try {
+      const { data } = await api.patch(`/fm/routes/${id}`, payload);
+      set(s => ({ routes: s.routes.map(r => r.id === id ? { ...r, ...data.route } : r) }));
+      return { ok: true };
+    } catch (e: any) { return { ok: false, error: e.response?.data?.error || 'Error' }; }
+  },
+  deleteRoute: async (id) => {
+    try {
+      await api.delete(`/fm/routes/${id}`);
+      set(s => ({ routes: s.routes.filter(r => r.id !== id) }));
+      return { ok: true };
+    } catch (e: any) { return { ok: false, error: e.response?.data?.error || 'Error' }; }
+  },
+  assignVehicleRoute: async (vehicleId, routeId) => {
+    try {
+      await api.patch(`/fm/vehicles/${vehicleId}/assign-route`, { route_id: routeId });
+      await get().fetchAll();
       return { ok: true };
     } catch (e: any) { return { ok: false, error: e.response?.data?.error || 'Error' }; }
   },

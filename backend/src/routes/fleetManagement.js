@@ -2,6 +2,8 @@
 const router = require('express').Router();
 const { query } = require('../db');
 const { auth, tenantScope, canRead, canAssign, canManageFleet } = require('../middleware/auth');
+const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
 
 const tw = (tid, alias = '') => {
   const col = alias ? `${alias}.tenant_id` : 'tenant_id';
@@ -127,12 +129,39 @@ router.post('/drivers', auth, tenantScope, canManageFleet, async (req, res) => {
   }
   if (!req.tenantId) return res.status(400).json({ error: 'Tenant required' });
   try {
+    // Generate mobile app credentials
+    const tenantResult = await query(`SELECT slug FROM tenants WHERE id = $1`, [req.tenantId]);
+    const tenantSlug = tenantResult.rows[0]?.slug || 'fleet';
+    const mobileEmail = email || `${employee_id.toLowerCase().replace(/[^a-z0-9]/g, '.')}@${tenantSlug}.fleet`;
+    const licenseShort = license_number.replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase();
+    const year = new Date().getFullYear();
+    const plainPassword = `Driver@${year}${licenseShort}`;
+    const passwordHash = await bcrypt.hash(plainPassword, 10);
+
+    // Create user for mobile app
+    const userResult = await query(`
+      INSERT INTO users (tenant_id, email, password_hash, full_name, role, is_active)
+      VALUES ($1,$2,$3,$4,'driver',true)
+      ON CONFLICT (email) DO UPDATE SET full_name = EXCLUDED.full_name
+      RETURNING id, email
+    `, [req.tenantId, mobileEmail, passwordHash, full_name]);
+    const userId = userResult.rows[0].id;
+
+    // Create driver linked to user
     const result = await query(`
-      INSERT INTO drivers (tenant_id, employee_id, full_name, phone, email, license_number, license_class, license_expiry, depot_id, emergency_contact)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      INSERT INTO drivers (tenant_id, employee_id, full_name, phone, email, license_number, license_class, license_expiry, depot_id, emergency_contact, user_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
       RETURNING *
-    `, [req.tenantId, employee_id, full_name, phone||null, email||null, license_number, license_class||'LTV', license_expiry, depot_id||null, emergency_contact||null]);
-    res.status(201).json({ driver: result.rows[0] });
+    `, [req.tenantId, employee_id, full_name, phone||null, email||null, license_number, license_class||'LTV', license_expiry, depot_id||null, emergency_contact||null, userId]);
+
+    res.status(201).json({
+      driver: result.rows[0],
+      mobile_credentials: {
+        email: mobileEmail,
+        password: plainPassword,
+        note: 'Save these credentials for the mobile app. Password is shown only once.'
+      }
+    });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'Employee ID or license number already exists in this organisation' });
     res.status(500).json({ error: err.message });
@@ -203,10 +232,12 @@ router.get('/vehicles', auth, tenantScope, canRead, async (req, res) => {
       SELECT v.*,
              ST_X(v.current_location) AS lng, ST_Y(v.current_location) AS lat,
              d.id AS driver_id, d.full_name AS driver_name, d.phone AS driver_phone,
-             dp.id AS depot_id, dp.name AS depot_name
+             dp.id AS depot_id, dp.name AS depot_name,
+             r.id AS route_id, r.name AS route_name, r.color AS route_color
       FROM vehicles v
       LEFT JOIN drivers d  ON v.assigned_driver_id = d.id
       LEFT JOIN depots  dp ON v.depot_id = dp.id
+      LEFT JOIN routes  r  ON v.route_id = r.id
       WHERE ${conds.join(' AND ')}
       ORDER BY v.registration
     `, params);
@@ -219,11 +250,13 @@ router.post('/vehicles', auth, tenantScope, canManageFleet, async (req, res) => 
   if (!registration || !make || !model || !year) return res.status(400).json({ error: 'registration, make, model and year are required' });
   if (!req.tenantId) return res.status(400).json({ error: 'Tenant required' });
   try {
+    const vehicleId = uuidv4();
+    const qrCode = `cloudnext://bus/${vehicleId}`;
     const result = await query(`
-      INSERT INTO vehicles (tenant_id, registration, make, model, year, type, color, vin, fuel_capacity, fuel_type, max_speed, payload_capacity, seats, depot_id, insurance_expiry, registration_expiry, purchase_date, notes, status)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,'offline')
+      INSERT INTO vehicles (id, tenant_id, registration, make, model, year, type, color, vin, fuel_capacity, fuel_type, max_speed, payload_capacity, seats, depot_id, insurance_expiry, registration_expiry, purchase_date, notes, status, qr_code)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'offline',$20)
       RETURNING *
-    `, [req.tenantId, registration.toUpperCase(), make, model, year, type||'truck', color||null, vin||null, fuel_capacity||60, fuel_type||'diesel', max_speed||120, payload_capacity||null, seats||null, depot_id||null, insurance_expiry||null, registration_expiry||null, purchase_date||null, notes||null]);
+    `, [vehicleId, req.tenantId, registration.toUpperCase(), make, model, year, type||'truck', color||null, vin||null, fuel_capacity||60, fuel_type||'diesel', max_speed||120, payload_capacity||null, seats||null, depot_id||null, insurance_expiry||null, registration_expiry||null, purchase_date||null, notes||null, qrCode]);
     res.status(201).json({ vehicle: result.rows[0] });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'A vehicle with this registration already exists in this organisation' });
@@ -271,6 +304,21 @@ router.patch('/vehicles/:id/assign-driver', auth, tenantScope, canAssign, async 
     }
     await query(`UPDATE vehicles SET assigned_driver_id = $1, updated_at = NOW() WHERE id = $2`, [driver_id||null, req.params.id]);
     res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PATCH /fm/vehicles/:id/assign-route
+router.patch('/vehicles/:id/assign-route', auth, tenantScope, canAssign, async (req, res) => {
+  const { route_id } = req.body;
+  try {
+    const vCheck = await query(`SELECT id FROM vehicles WHERE id = $1 AND ${tw(req.tenantId)}`, [req.params.id]);
+    if (!vCheck.rows.length) return res.status(404).json({ error: 'Vehicle not found' });
+    if (route_id) {
+      const rCheck = await query(`SELECT id FROM routes WHERE id = $1 AND ${tw(req.tenantId)}`, [route_id]);
+      if (!rCheck.rows.length) return res.status(404).json({ error: 'Route not found' });
+    }
+    await query(`UPDATE vehicles SET route_id = $1, updated_at = NOW() WHERE id = $2`, [route_id||null, req.params.id]);
+    res.json({ success: true, message: route_id ? 'Route assigned to vehicle' : 'Route unassigned' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -346,18 +394,104 @@ router.delete('/geofences/:id', auth, tenantScope, canManageFleet, async (req, r
 // GET /fm/summary — counts for the management page header
 router.get('/summary', auth, tenantScope, canRead, async (req, res) => {
   try {
-    const [drivers, vehicles, geofences, depots] = await Promise.all([
+    const [drivers, vehicles, geofences, depots, routes] = await Promise.all([
       query(`SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE status='active') AS active FROM drivers WHERE ${tw(req.tenantId)}`),
       query(`SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE status='active') AS active FROM vehicles WHERE ${tw(req.tenantId)}`),
       query(`SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE is_active=true) AS active FROM geofences WHERE ${tw(req.tenantId)}`),
       query(`SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE is_active=true) AS active FROM depots WHERE ${tw(req.tenantId)}`),
+      query(`SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE is_active=true) AS active FROM routes WHERE ${tw(req.tenantId)}`),
     ]);
     res.json({
       drivers:   drivers.rows[0],
       vehicles:  vehicles.rows[0],
       geofences: geofences.rows[0],
       depots:    depots.rows[0],
+      routes:    routes.rows[0],
     });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ══════════════════════════════════════════════════════════════════
+// ROUTES — full CRUD
+// ══════════════════════════════════════════════════════════════════
+
+router.get('/routes', auth, tenantScope, canRead, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT r.*,
+             ST_AsGeoJSON(r.path)::json AS path_geojson,
+             ST_Length(r.path::geography) / 1000 AS computed_distance_km,
+             COUNT(v.id) AS vehicle_count
+      FROM routes r
+      LEFT JOIN vehicles v ON v.route_id = r.id
+      WHERE ${tw(req.tenantId, 'r')}
+      GROUP BY r.id
+      ORDER BY r.name
+    `);
+    res.json({ routes: result.rows });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/routes/:id', auth, tenantScope, canRead, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT r.*, ST_AsGeoJSON(r.path)::json AS path_geojson
+      FROM routes r
+      WHERE r.id = $1 AND ${tw(req.tenantId, 'r')}
+    `, [req.params.id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Route not found' });
+    res.json({ route: result.rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.post('/routes', auth, tenantScope, canManageFleet, async (req, res) => {
+  const { name, description, color, coordinates, duration_min } = req.body;
+  if (!name || !coordinates?.length || coordinates.length < 2) {
+    return res.status(400).json({ error: 'name and at least 2 coordinate points are required' });
+  }
+  if (!req.tenantId) return res.status(400).json({ error: 'Tenant required' });
+  try {
+    const pts = coordinates.map((c) => `${c[0]} ${c[1]}`).join(',');
+    const result = await query(`
+      INSERT INTO routes (tenant_id, name, description, color, path, duration_min)
+      VALUES ($1,$2,$3,$4, ST_SetSRID(ST_GeomFromText($5),4326),$6)
+      RETURNING *, ST_AsGeoJSON(path)::json AS path_geojson,
+                 ST_Length(path::geography)/1000 AS computed_distance_km
+    `, [req.tenantId, name, description||null, color||'#00d4e8', `LINESTRING(${pts})`, duration_min||null]);
+    res.status(201).json({ route: result.rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.patch('/routes/:id', auth, tenantScope, canManageFleet, async (req, res) => {
+  const fields = ['name','description','color','is_active','duration_min'];
+  const updates = []; const params = [];
+  for (const f of fields) {
+    if (req.body[f] !== undefined) { params.push(req.body[f]); updates.push(`${f} = $${params.length}`); }
+  }
+  if (req.body.coordinates?.length >= 2) {
+    const pts = req.body.coordinates.map((c) => `${c[0]} ${c[1]}`).join(',');
+    params.push(`LINESTRING(${pts})`);
+    updates.push(`path = ST_SetSRID(ST_GeomFromText($${params.length}),4326)`);
+  }
+  if (!updates.length) return res.status(400).json({ error: 'No fields to update' });
+  params.push(req.params.id);
+  try {
+    const result = await query(
+      `UPDATE routes SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${params.length} AND ${tw(req.tenantId)}
+       RETURNING *, ST_AsGeoJSON(path)::json AS path_geojson`,
+      params
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Route not found' });
+    res.json({ route: result.rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.delete('/routes/:id', auth, tenantScope, canManageFleet, async (req, res) => {
+  try {
+    await query(`UPDATE vehicles SET route_id = NULL WHERE route_id = $1`, [req.params.id]);
+    const result = await query(`DELETE FROM routes WHERE id = $1 AND ${tw(req.tenantId)} RETURNING name`, [req.params.id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Route not found' });
+    res.json({ message: `Route "${result.rows[0].name}" deleted` });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
