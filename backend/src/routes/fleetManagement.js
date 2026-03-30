@@ -123,28 +123,28 @@ router.get('/drivers/:id', auth, tenantScope, canRead, async (req, res) => {
 });
 
 router.post('/drivers', auth, tenantScope, canManageFleet, async (req, res) => {
-  const { employee_id, full_name, phone, email, license_number, license_class, license_expiry, depot_id, emergency_contact } = req.body;
+  const { employee_id, full_name, phone, email, license_number, license_class, license_expiry, depot_id, emergency_contact, mobile_email, mobile_password } = req.body;
   if (!employee_id || !full_name || !license_number || !license_expiry) {
     return res.status(400).json({ error: 'employee_id, full_name, license_number and license_expiry are required' });
   }
+  if (!mobile_password) {
+    return res.status(400).json({ error: 'mobile_password is required for driver mobile app access' });
+  }
   if (!req.tenantId) return res.status(400).json({ error: 'Tenant required' });
   try {
-    // Generate mobile app credentials
+    // Resolve mobile app login email
     const tenantResult = await query(`SELECT slug FROM tenants WHERE id = $1`, [req.tenantId]);
     const tenantSlug = tenantResult.rows[0]?.slug || 'fleet';
-    const mobileEmail = email || `${employee_id.toLowerCase().replace(/[^a-z0-9]/g, '.')}@${tenantSlug}.fleet`;
-    const licenseShort = license_number.replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase();
-    const year = new Date().getFullYear();
-    const plainPassword = `Driver@${year}${licenseShort}`;
-    const passwordHash = await bcrypt.hash(plainPassword, 10);
+    const resolvedMobileEmail = mobile_email || email || `${employee_id.toLowerCase().replace(/[^a-z0-9]/g, '.')}@${tenantSlug}.fleet`;
+    const passwordHash = await bcrypt.hash(mobile_password, 10);
 
-    // Create user for mobile app
+    // Create user for mobile app with viewer role
     const userResult = await query(`
       INSERT INTO users (tenant_id, email, password_hash, full_name, role, is_active)
-      VALUES ($1,$2,$3,$4,'driver',true)
-      ON CONFLICT (email) DO UPDATE SET full_name = EXCLUDED.full_name
+      VALUES ($1,$2,$3,$4,'viewer',true)
+      ON CONFLICT (email) DO UPDATE SET full_name = EXCLUDED.full_name, password_hash = EXCLUDED.password_hash
       RETURNING id, email
-    `, [req.tenantId, mobileEmail, passwordHash, full_name]);
+    `, [req.tenantId, resolvedMobileEmail, passwordHash, full_name]);
     const userId = userResult.rows[0].id;
 
     // Create driver linked to user
@@ -154,14 +154,7 @@ router.post('/drivers', auth, tenantScope, canManageFleet, async (req, res) => {
       RETURNING *
     `, [req.tenantId, employee_id, full_name, phone||null, email||null, license_number, license_class||'LTV', license_expiry, depot_id||null, emergency_contact||null, userId]);
 
-    res.status(201).json({
-      driver: result.rows[0],
-      mobile_credentials: {
-        email: mobileEmail,
-        password: plainPassword,
-        note: 'Save these credentials for the mobile app. Password is shown only once.'
-      }
-    });
+    res.status(201).json({ driver: result.rows[0] });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'Employee ID or license number already exists in this organisation' });
     res.status(500).json({ error: err.message });

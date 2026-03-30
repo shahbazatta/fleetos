@@ -42,7 +42,7 @@ const tenantScope = (req, res, next) => {
 const permissions = {
   canRead:        (u) => ['viewer', 'operator', 'admin', 'superadmin'].includes(u?.role),
   canAssign:      (u) => ['operator', 'admin', 'superadmin'].includes(u?.role),
-  canManageFleet: (u) => ['admin', 'superadmin'].includes(u?.role),
+  canManageFleet: (u) => ['operator', 'admin', 'superadmin'].includes(u?.role),
   canManageUsers: (u) => ['admin', 'superadmin'].includes(u?.role),
   isSuperadmin:   (u) => u?.role === 'superadmin',
 };

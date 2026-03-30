@@ -12,7 +12,7 @@ const TYPE_EMOJI: Record<string, string> = { truck: '🚛', van: '🚐', car: '�
 
 function VehicleForm({ vehicle, onSave, onClose }: {
   vehicle: FMVehicle | null;
-  onSave: (p: any) => Promise<{ ok: boolean; error?: string }>;
+  onSave: (p: any) => Promise<{ ok: boolean; vehicle?: any; error?: string }>;
   onClose: () => void;
 }) {
   const isEdit = !!vehicle;
@@ -38,6 +38,8 @@ function VehicleForm({ vehicle, onSave, onClose }: {
   });
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
+  const [createdVehicle, setCreatedVehicle] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
 
@@ -46,8 +48,40 @@ function VehicleForm({ vehicle, onSave, onClose }: {
     const result = await onSave({ ...form, depot_id: form.depot_id || null, payload_capacity: form.payload_capacity || null, seats: form.seats || null });
     setSaving(false);
     if (!result.ok) setError(result.error || 'Error');
+    else if (!isEdit && result.vehicle) setCreatedVehicle(result.vehicle);
     else onClose();
   };
+
+  const copyQr = () => {
+    navigator.clipboard.writeText(createdVehicle?.qr_code || '').then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
+
+  if (createdVehicle) {
+    return (
+      <Modal title="Vehicle Added" subtitle={`${createdVehicle.registration} — ${createdVehicle.make} ${createdVehicle.model}`} onClose={onClose} width={440}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
+          <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.2)', fontSize: 12, color: '#86efac', width: '100%', textAlign: 'center' }}>
+            Vehicle registered successfully!
+          </div>
+          <div style={{ padding: 20, background: 'rgba(0,212,232,.05)', border: `1px solid rgba(0,212,232,.15)`, borderRadius: 12, textAlign: 'center', width: '100%' }}>
+            <div style={{ fontSize: 11, color: C.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Vehicle QR Code</div>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: C.cyan, wordBreak: 'break-all', padding: '12px 16px', background: 'rgba(0,212,232,.08)', borderRadius: 8, border: `1px solid rgba(0,212,232,.15)` }}>
+              {createdVehicle.qr_code}
+            </div>
+            <div style={{ fontSize: 11, color: C.muted, marginTop: 10, lineHeight: 1.6 }}>
+              Print this QR code and attach it to the vehicle. Drivers scan it to pair with this bus.
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+            <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'rgba(255,255,255,.04)', border: `1px solid rgba(255,255,255,.07)`, color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Close</button>
+            <button onClick={copyQr} style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: copied ? C.green : C.cyan, color: C.bg, cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14 }}>
+              {copied ? '✓ Copied!' : 'Copy QR Payload'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal title={isEdit ? 'Edit Vehicle' : 'Add Vehicle'} subtitle={isEdit ? vehicle?.registration : 'Register a new vehicle to your fleet'} onClose={onClose} width={600}>

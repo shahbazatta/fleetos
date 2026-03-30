@@ -34,7 +34,7 @@ export default function FleetMap({ onEditGeofence }: Props) {
     selectVehicle, fetchGeofences,
   } = useFleetStore();
 
-  const { layers: fmLayers, deleteGeofence: deleteFMGeofence, addGeofenceToLayer } = useFMStore();
+  const { layers: fmLayers, deleteGeofence: deleteFMGeofence, addGeofenceToLayer, routes: fmRoutes, vehicles: fmVehicles } = useFMStore();
 
   const containerRef  = useRef<HTMLDivElement>(null);
   const deckRef       = useRef<any>(null);
@@ -123,6 +123,44 @@ export default function FleetMap({ onEditGeofence }: Props) {
         lineWidthMinPixels: 2,
         filled: true, stroked: true, pickable: true,
       }));
+    }
+
+    // Planned route paths — shown when trails are on OR a vehicle with a route is selected
+    const selectedFmVehicle = fmVehicles.find(v => v.id === selectedVehicleId);
+    const selectedRouteId   = selectedFmVehicle?.route_id;
+    const activeRoutes = fmRoutes.filter(r => r.is_active && r.path_geojson?.coordinates?.length >= 2);
+
+    if ((showTrails || selectedRouteId) && activeRoutes.length > 0) {
+      const routeLayerData = activeRoutes
+        .filter(r => showTrails || r.id === selectedRouteId)
+        .map(r => ({
+          id: r.id,
+          path: r.path_geojson!.coordinates as [number, number][],
+          color: r.color || '#00d4e8',
+          isSelected: r.id === selectedRouteId,
+        }));
+
+      if (routeLayerData.length > 0) {
+        // Background route lines
+        out.push(new PathLayer({
+          id: 'route-paths-bg',
+          data: routeLayerData.filter(r => !r.isSelected),
+          getPath:  (d: any) => d.path,
+          getColor: (d: any) => { const [r, g, b] = hexToRgb(d.color); return [r, g, b, 90] as [number,number,number,number]; },
+          getWidth: 3, widthMinPixels: 2, widthMaxPixels: 5, capRounded: true, jointRounded: true,
+          getDashArray: [6, 4], extensions: [] as any,
+        }));
+        // Highlighted selected route
+        if (selectedRouteId) {
+          out.push(new PathLayer({
+            id: 'route-path-selected',
+            data: routeLayerData.filter(r => r.isSelected),
+            getPath:  (d: any) => d.path,
+            getColor: (d: any) => { const [r, g, b] = hexToRgb(d.color); return [r, g, b, 255] as [number,number,number,number]; },
+            getWidth: 6, widthMinPixels: 4, widthMaxPixels: 10, capRounded: true, jointRounded: true,
+          }));
+        }
+      }
     }
 
     if (showTrails && trails.length > 0) {
@@ -218,7 +256,8 @@ export default function FleetMap({ onEditGeofence }: Props) {
 
     return out;
   }, [vehicles, visibleGeofences, trails, heatmapData, selectedVehicleId,
-      showGeofences, showTrails, showHeatmap, mapViewState.zoom, selectVehicle]);
+      showGeofences, showTrails, showHeatmap, mapViewState.zoom, selectVehicle,
+      fmRoutes, fmVehicles]);
 
   const onViewStateChange = useCallback(({ viewState }: any) => setMapViewState(viewState), [setMapViewState]);
 

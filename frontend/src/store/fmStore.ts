@@ -100,7 +100,7 @@ interface FMStore {
   assignDriver: (driverId: string, vehicleId: string | null) => Promise<{ ok: boolean; error?: string }>;
 
   // Vehicles
-  createVehicle: (v: any) => Promise<{ ok: boolean; error?: string }>;
+  createVehicle: (v: any) => Promise<{ ok: boolean; vehicle?: any; error?: string }>;
   updateVehicle: (id: string, v: any) => Promise<{ ok: boolean; error?: string }>;
   deleteVehicle: (id: string) => Promise<{ ok: boolean; error?: string }>;
   assignVehicleDriver: (vehicleId: string, driverId: string | null) => Promise<{ ok: boolean; error?: string }>;
@@ -211,7 +211,7 @@ export const useFMStore = create<FMStore>((set, get) => ({
     try {
       const { data } = await api.post('/fm/vehicles', payload);
       set(s => ({ vehicles: [...s.vehicles, data.vehicle] }));
-      return { ok: true };
+      return { ok: true, vehicle: data.vehicle };
     } catch (e: any) { return { ok: false, error: e.response?.data?.error || 'Error' }; }
   },
   updateVehicle: async (id, payload) => {

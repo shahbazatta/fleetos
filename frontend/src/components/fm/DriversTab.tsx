@@ -24,18 +24,27 @@ function DriverForm({ driver, onSave, onClose }: {
     status:            driver?.status            || 'active',
     emergency_contact: driver?.emergency_contact || '',
     depot_id:          driver?.depot_id          || '',
+    mobile_email:      '',
+    mobile_password:   '',
   });
   const { depots } = useFMStore();
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState('');
+  const [showPwd, setShowPwd] = useState(false);
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!isEdit && !form.mobile_password) { setError('Mobile app password is required'); return; }
     setSaving(true);
-    const payload = { ...form, depot_id: form.depot_id || null };
+    const { mobile_email, mobile_password, ...rest } = form;
+    const payload: any = { ...rest, depot_id: form.depot_id || null };
+    if (!isEdit) {
+      if (mobile_email) payload.mobile_email = mobile_email;
+      payload.mobile_password = mobile_password;
+    }
     const result = await onSave(payload);
     setSaving(false);
     if (!result.ok) setError(result.error || 'Error');
@@ -79,6 +88,39 @@ function DriverForm({ driver, onSave, onClose }: {
           </FormField>
           <FormField label="Emergency Contact"><input value={form.emergency_contact} onChange={set('emergency_contact')} style={inp} placeholder="+92-..." /></FormField>
         </FormRow>
+        {!isEdit && (
+          <>
+            <div style={{ margin: '4px 0 0', borderTop: `1px solid rgba(255,255,255,.07)`, paddingTop: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.cyan, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Mobile App Credentials</div>
+            </div>
+            <FormRow>
+              <FormField label="Mobile Login Email">
+                <input value={form.mobile_email} onChange={set('mobile_email')} type="email" style={inp} placeholder="auto-generated if blank" />
+              </FormField>
+              <FormField label="Mobile Password *">
+                <div style={{ position: 'relative' }}>
+                  <input
+                    value={form.mobile_password}
+                    onChange={set('mobile_password')}
+                    type={showPwd ? 'text' : 'password'}
+                    style={{ ...inp, paddingRight: 60 }}
+                    placeholder="Set login password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd(p => !p)}
+                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}
+                  >
+                    {showPwd ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </FormField>
+            </FormRow>
+            <div style={{ fontSize: 11, color: C.muted, marginTop: -6, lineHeight: 1.6 }}>
+              Driver uses these credentials to log in to the mobile app. Share securely — password is not recoverable after saving.
+            </div>
+          </>
+        )}
         <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
           <CancelButton onClick={onClose} />
           <SaveButton saving={saving} label={isEdit ? 'Save Changes' : 'Add Driver'} />
@@ -184,7 +226,6 @@ export default function DriversTab() {
   const [assignDrv,  setAssignDrv]  = useState<FMDriver | null>(null);
   const [deleteDrv,  setDeleteDrv]  = useState<FMDriver | null>(null);
   const [error,      setError]      = useState('');
-  const [newDriverCreds, setNewDriverCreds] = useState<any>(null);
 
   const filtered = drivers.filter(d => {
     const q = search.toLowerCase();
@@ -262,19 +303,12 @@ export default function DriversTab() {
       {editDriver !== undefined && (
         <DriverForm
           driver={editDriver}
-          onSave={editDriver ? (p) => updateDriver(editDriver.id, p) : async (p) => {
-            const result = await createDriver(p);
-            if (result.ok && (result as any).mobile_credentials) {
-              setNewDriverCreds((result as any).mobile_credentials);
-            }
-            return result;
-          }}
+          onSave={editDriver ? (p) => updateDriver(editDriver.id, p) : createDriver}
           onClose={() => setEditDriver(undefined)}
         />
       )}
       {assignDrv && <AssignDriverModal driver={assignDrv} onClose={() => setAssignDrv(null)} />}
       {deleteDrv && <ConfirmDelete name={deleteDrv.full_name} entity="driver" onConfirm={handleDelete} onCancel={() => setDeleteDrv(null)} />}
-      {newDriverCreds && <CredentialsModal credentials={newDriverCreds} onClose={() => setNewDriverCreds(null)} />}
     </div>
   );
 }
