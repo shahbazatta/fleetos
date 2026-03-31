@@ -1,10 +1,12 @@
 -- ============================================================
---  CloudNext Fleet Management — Full Multi-Tenant Seed
---  7 Tenants: cloudnext-technologies, naqel-express, enoc-fleet,
---             q-logistics, asyad-group, agility-logistics, blz-operators
+--  CloudNext Fleet Management -- Full Multi-Tenant Seed
+--  SELF-CONTAINED: bootstraps schema then seeds 7 tenants.
 --
---  Run AFTER full schema is created (fleet_complete.sql +
---  add_multitenancy.sql + add_routes_qr_credentials.sql)
+--  Tenants: cloudnext-technologies, naqel-express, enoc-fleet,
+--           q-logistics, asyad-group, agility-logistics, blz-operators
+--
+--  Safe to run on outdated or fresh databases.
+--  Idempotent -- re-running will not duplicate data.
 --
 --  psql -U postgres -d fleet_db -f fleet_multitenant_seed.sql
 -- ============================================================
@@ -12,17 +14,578 @@
 \set ON_ERROR_STOP on
 BEGIN;
 
+-- ══════════════════════════════════════════════════════════════════════════════
+-- S. SCHEMA BOOTSTRAP  (idempotent -- safe to run on ANY database state)
+--    Creates all tables, columns, constraints, indexes, functions and views
+--    that are missing.  Existing objects are left untouched.
+-- ══════════════════════════════════════════════════════════════════════════════
+
+DO $$ BEGIN RAISE NOTICE '=== [S] Schema Bootstrap -- creating missing objects ==='; END $$;
+
+-- S1. EXTENSIONS
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS postgis_topology;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- S2. ENUM TYPES (exception-safe, safe to run when already exist)
+DO $$ BEGIN CREATE TYPE vehicle_status  AS ENUM ('active','idle','offline','maintenance','alert');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN CREATE TYPE vehicle_type    AS ENUM ('truck','van','car','bus','motorcycle','heavy');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN CREATE TYPE alert_severity  AS ENUM ('critical','warning','info');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN CREATE TYPE alert_type AS ENUM (
+  'speeding','geofence_enter','geofence_exit','harsh_braking','harsh_acceleration',
+  'idle_timeout','sos','low_fuel','maintenance_due','offline','fatigue');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN CREATE TYPE driver_status   AS ENUM ('active','inactive','on_leave','suspended');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN CREATE TYPE trip_status     AS ENUM ('planned','active','completed','cancelled');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN CREATE TYPE maintenance_type AS ENUM (
+  'oil_change','brake_service','tire_rotation','full_service','battery',
+  'transmission','electrical','bodywork','inspection','other');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- S3. CORE TABLES (CREATE TABLE IF NOT EXISTS)
+-- Note: FKs are added separately in S5 to avoid ordering issues.
+
+-- users
+CREATE TABLE IF NOT EXISTS users (
+    id            UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email         VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name     VARCHAR(255) NOT NULL,
+    role          VARCHAR(50)  NOT NULL DEFAULT 'operator',
+    is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
+    last_login    TIMESTAMPTZ,
+    avatar_url    TEXT,
+    phone         VARCHAR(50),
+    created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- tenants
+CREATE TABLE IF NOT EXISTS tenants (
+    id           UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name         VARCHAR(255) NOT NULL,
+    slug         VARCHAR(100) UNIQUE NOT NULL,
+    country      VARCHAR(100) DEFAULT 'Pakistan',
+    city         VARCHAR(100),
+    address      TEXT,
+    phone        VARCHAR(50),
+    email        VARCHAR(255),
+    website      VARCHAR(255),
+    logo_url     TEXT,
+    is_active    BOOLEAN      NOT NULL DEFAULT true,
+    plan         VARCHAR(50)  DEFAULT 'standard',
+    max_vehicles INTEGER      DEFAULT 50,
+    max_users    INTEGER      DEFAULT 10,
+    settings     JSONB        DEFAULT '{}',
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- depots
+CREATE TABLE IF NOT EXISTS depots (
+    id         UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name       VARCHAR(255) NOT NULL,
+    address    TEXT,
+    city       VARCHAR(100) DEFAULT 'Lahore',
+    country    VARCHAR(100) DEFAULT 'Pakistan',
+    location   GEOMETRY(Point, 4326),
+    capacity   INTEGER      DEFAULT 50,
+    manager    VARCHAR(255),
+    phone      VARCHAR(50),
+    is_active  BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- drivers  (no global UNIQUE on employee_id/license -- tenant-scoped in S6)
+CREATE TABLE IF NOT EXISTS drivers (
+    id                UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+    employee_id       VARCHAR(50)   NOT NULL,
+    full_name         VARCHAR(255)  NOT NULL,
+    phone             VARCHAR(50),
+    email             VARCHAR(255),
+    license_number    VARCHAR(100)  NOT NULL,
+    license_class     VARCHAR(20)   DEFAULT 'LTV',
+    license_expiry    DATE          NOT NULL,
+    status            driver_status NOT NULL DEFAULT 'active',
+    safety_score      NUMERIC(5,2)  DEFAULT 100.00 CHECK (safety_score BETWEEN 0 AND 100),
+    total_distance_km NUMERIC(12,2) DEFAULT 0,
+    total_trips       INTEGER       DEFAULT 0,
+    total_hours       NUMERIC(10,2) DEFAULT 0,
+    depot_id          UUID,
+    photo_url         TEXT,
+    emergency_contact VARCHAR(255),
+    notes             TEXT,
+    created_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);
+
+-- vehicles  (no global UNIQUE on registration -- tenant-scoped in S6)
+CREATE TABLE IF NOT EXISTS vehicles (
+    id                  UUID           PRIMARY KEY DEFAULT uuid_generate_v4(),
+    registration        VARCHAR(50)    NOT NULL,
+    make                VARCHAR(100)   NOT NULL,
+    model               VARCHAR(100)   NOT NULL,
+    year                SMALLINT       NOT NULL CHECK (year BETWEEN 1990 AND 2030),
+    type                vehicle_type   NOT NULL DEFAULT 'truck',
+    color               VARCHAR(50),
+    vin                 VARCHAR(100),
+    status              vehicle_status NOT NULL DEFAULT 'offline',
+    current_location    GEOMETRY(Point, 4326),
+    current_speed       NUMERIC(6,2)   DEFAULT 0   CHECK (current_speed >= 0),
+    current_heading     NUMERIC(6,2)   DEFAULT 0   CHECK (current_heading BETWEEN 0 AND 360),
+    current_fuel        NUMERIC(5,2)   DEFAULT 100 CHECK (current_fuel BETWEEN 0 AND 100),
+    current_odometer    NUMERIC(12,2)  DEFAULT 0,
+    engine_on           BOOLEAN        DEFAULT FALSE,
+    last_seen           TIMESTAMPTZ,
+    fuel_capacity       NUMERIC(8,2)   DEFAULT 60,
+    fuel_type           VARCHAR(20)    DEFAULT 'diesel',
+    fuel_efficiency     NUMERIC(6,2)   DEFAULT 10,
+    max_speed           NUMERIC(6,2)   DEFAULT 120,
+    payload_capacity    NUMERIC(10,2),
+    seats               SMALLINT,
+    health_score        NUMERIC(5,2)   DEFAULT 100 CHECK (health_score BETWEEN 0 AND 100),
+    last_service_date   DATE,
+    last_service_km     NUMERIC(12,2),
+    next_service_km     NUMERIC(12,2),
+    insurance_expiry    DATE,
+    registration_expiry DATE,
+    assigned_driver_id  UUID,
+    depot_id            UUID,
+    purchase_date       DATE,
+    purchase_price      NUMERIC(12,2),
+    notes               TEXT,
+    created_at          TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ    NOT NULL DEFAULT NOW()
+);
+
+-- trips
+CREATE TABLE IF NOT EXISTS trips (
+    id               UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    vehicle_id       UUID        NOT NULL,
+    driver_id        UUID,
+    status           trip_status NOT NULL DEFAULT 'planned',
+    origin           GEOMETRY(Point, 4326),
+    destination      GEOMETRY(Point, 4326),
+    route_path       GEOMETRY(LineString, 4326),
+    planned_path     GEOMETRY(LineString, 4326),
+    origin_address   TEXT,
+    dest_address     TEXT,
+    planned_start    TIMESTAMPTZ,
+    planned_end      TIMESTAMPTZ,
+    started_at       TIMESTAMPTZ,
+    completed_at     TIMESTAMPTZ,
+    distance_km      NUMERIC(10,2) DEFAULT 0,
+    duration_mins    INTEGER       DEFAULT 0,
+    avg_speed        NUMERIC(6,2),
+    max_speed        NUMERIC(6,2),
+    fuel_used        NUMERIC(8,2),
+    idle_time_mins   INTEGER       DEFAULT 0,
+    harsh_events     INTEGER       DEFAULT 0,
+    co2_kg           NUMERIC(8,2),
+    load_description TEXT,
+    load_weight_kg   NUMERIC(10,2),
+    notes            TEXT,
+    customer_ref     VARCHAR(100),
+    created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);
+
+-- geofences
+CREATE TABLE IF NOT EXISTS geofences (
+    id             UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name           VARCHAR(255) NOT NULL,
+    description    TEXT,
+    boundary       GEOMETRY(Polygon, 4326),
+    color          VARCHAR(20)  DEFAULT '#00d4e8',
+    fill_opacity   NUMERIC(3,2) DEFAULT 0.10 CHECK (fill_opacity BETWEEN 0 AND 1),
+    is_active      BOOLEAN      NOT NULL DEFAULT TRUE,
+    alert_on_enter BOOLEAN      DEFAULT TRUE,
+    alert_on_exit  BOOLEAN      DEFAULT TRUE,
+    speed_limit    NUMERIC(6,2),
+    allowed_hours  VARCHAR(100),
+    zone_type      VARCHAR(50)  DEFAULT 'delivery',
+    created_by     UUID,
+    created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- alerts
+CREATE TABLE IF NOT EXISTS alerts (
+    id              UUID           PRIMARY KEY DEFAULT uuid_generate_v4(),
+    vehicle_id      UUID,
+    driver_id       UUID,
+    trip_id         UUID,
+    geofence_id     UUID,
+    type            alert_type     NOT NULL,
+    severity        alert_severity NOT NULL DEFAULT 'warning',
+    title           VARCHAR(255)   NOT NULL,
+    message         TEXT,
+    location        GEOMETRY(Point, 4326),
+    speed           NUMERIC(6,2),
+    additional_data JSONB,
+    is_read         BOOLEAN        DEFAULT FALSE,
+    is_resolved     BOOLEAN        DEFAULT FALSE,
+    resolved_by     UUID,
+    resolved_at     TIMESTAMPTZ,
+    resolution_note TEXT,
+    occurred_at     TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+    created_at      TIMESTAMPTZ    NOT NULL DEFAULT NOW()
+);
+
+-- telemetry  (append-only time-series)
+CREATE TABLE IF NOT EXISTS telemetry (
+    id              BIGSERIAL    PRIMARY KEY,
+    vehicle_id      UUID         NOT NULL,
+    recorded_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    location        GEOMETRY(Point, 4326) NOT NULL,
+    speed           NUMERIC(6,2) DEFAULT 0,
+    heading         NUMERIC(6,2) DEFAULT 0,
+    altitude        NUMERIC(8,2),
+    accuracy        NUMERIC(8,2),
+    fuel_level      NUMERIC(5,2),
+    odometer        NUMERIC(12,2),
+    engine_on       BOOLEAN      DEFAULT TRUE,
+    rpm             INTEGER,
+    engine_temp     NUMERIC(6,2),
+    battery_voltage NUMERIC(5,2),
+    throttle        NUMERIC(5,2),
+    satellites      SMALLINT,
+    trip_id         UUID
+);
+
+-- driver_scores
+CREATE TABLE IF NOT EXISTS driver_scores (
+    id                  UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    driver_id           UUID        NOT NULL,
+    trip_id             UUID,
+    period_date         DATE        NOT NULL,
+    period_type         VARCHAR(20) DEFAULT 'daily',
+    overall_score       NUMERIC(5,2),
+    speed_score         NUMERIC(5,2),
+    braking_score       NUMERIC(5,2),
+    cornering_score     NUMERIC(5,2),
+    fatigue_score       NUMERIC(5,2),
+    fuel_score          NUMERIC(5,2),
+    speeding_events     INTEGER     DEFAULT 0,
+    harsh_braking       INTEGER     DEFAULT 0,
+    harsh_acceleration  INTEGER     DEFAULT 0,
+    sharp_cornering     INTEGER     DEFAULT 0,
+    phone_use_events    INTEGER     DEFAULT 0,
+    seatbelt_violations INTEGER     DEFAULT 0,
+    distance_km         NUMERIC(10,2),
+    driving_hours       NUMERIC(8,2),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (driver_id, period_date, period_type)
+);
+
+-- maintenance
+CREATE TABLE IF NOT EXISTS maintenance (
+    id              UUID             PRIMARY KEY DEFAULT uuid_generate_v4(),
+    vehicle_id      UUID             NOT NULL,
+    type            maintenance_type NOT NULL DEFAULT 'other',
+    description     TEXT,
+    status          VARCHAR(50)      DEFAULT 'scheduled',
+    priority        VARCHAR(20)      DEFAULT 'normal',
+    scheduled_date  DATE,
+    completed_date  DATE,
+    odometer_at     NUMERIC(12,2),
+    next_service_km NUMERIC(12,2),
+    cost            NUMERIC(10,2),
+    currency        VARCHAR(3)       DEFAULT 'PKR',
+    parts_cost      NUMERIC(10,2),
+    labour_cost     NUMERIC(10,2),
+    technician      VARCHAR(255),
+    workshop        VARCHAR(255),
+    invoice_ref     VARCHAR(100),
+    notes           TEXT,
+    ai_predicted    BOOLEAN          DEFAULT FALSE,
+    ai_confidence   NUMERIC(4,2),
+    created_by      UUID,
+    created_at      TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ      NOT NULL DEFAULT NOW()
+);
+
+-- routes  (from add_routes_qr_credentials migration)
+CREATE TABLE IF NOT EXISTS routes (
+    id           UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id    UUID         NOT NULL,
+    name         VARCHAR(255) NOT NULL,
+    description  TEXT,
+    color        VARCHAR(20)  NOT NULL DEFAULT '#00d4e8',
+    path         GEOMETRY(LineString, 4326) NOT NULL,
+    is_active    BOOLEAN      NOT NULL DEFAULT true,
+    distance_km  NUMERIC(10,2),
+    duration_min INTEGER,
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- dispatch_approvals  (from add_routes_qr_credentials migration)
+CREATE TABLE IF NOT EXISTS dispatch_approvals (
+    id            UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id     UUID        NOT NULL,
+    vehicle_id    UUID        NOT NULL,
+    driver_id     UUID        NOT NULL,
+    supervisor_id UUID,
+    qr_payload    TEXT        NOT NULL,
+    status        VARCHAR(20) NOT NULL DEFAULT 'pending',
+    approved_at   TIMESTAMPTZ,
+    expires_at    TIMESTAMPTZ NOT NULL,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+DO $$ BEGIN RAISE NOTICE '    [OK] all tables created / verified'; END $$;
+
+-- S4. ADD MISSING COLUMNS (ALTER TABLE ... ADD COLUMN IF NOT EXISTS)
+
+-- tenant_id on every tenant-scoped table
+ALTER TABLE users         ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE depots        ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE drivers       ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE vehicles      ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE trips         ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE geofences     ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE alerts        ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE maintenance   ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE driver_scores ADD COLUMN IF NOT EXISTS tenant_id UUID;
+
+-- updated_at (may be absent on very old schemas)
+ALTER TABLE users         ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE drivers       ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE vehicles      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- qr_code, route_id, user_id  (add_routes_qr_credentials migration columns)
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS qr_code  TEXT;
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS route_id UUID;
+ALTER TABLE drivers  ADD COLUMN IF NOT EXISTS user_id  UUID;
+
+DO $$ BEGIN RAISE NOTICE '    [OK] all columns added / verified'; END $$;
+
+-- S5. FOREIGN KEY CONSTRAINTS (add only when missing)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_tenant_id_fkey') THEN
+    ALTER TABLE users        ADD CONSTRAINT users_tenant_id_fkey        FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'depots_tenant_id_fkey') THEN
+    ALTER TABLE depots       ADD CONSTRAINT depots_tenant_id_fkey       FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'drivers_tenant_id_fkey') THEN
+    ALTER TABLE drivers      ADD CONSTRAINT drivers_tenant_id_fkey      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vehicles_tenant_id_fkey') THEN
+    ALTER TABLE vehicles     ADD CONSTRAINT vehicles_tenant_id_fkey     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'trips_tenant_id_fkey') THEN
+    ALTER TABLE trips        ADD CONSTRAINT trips_tenant_id_fkey        FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'geofences_tenant_id_fkey') THEN
+    ALTER TABLE geofences    ADD CONSTRAINT geofences_tenant_id_fkey    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'alerts_tenant_id_fkey') THEN
+    ALTER TABLE alerts       ADD CONSTRAINT alerts_tenant_id_fkey       FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'maintenance_tenant_id_fkey') THEN
+    ALTER TABLE maintenance  ADD CONSTRAINT maintenance_tenant_id_fkey  FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'driver_scores_tenant_id_fkey') THEN
+    ALTER TABLE driver_scores ADD CONSTRAINT driver_scores_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'routes_tenant_id_fkey') THEN
+    ALTER TABLE routes       ADD CONSTRAINT routes_tenant_id_fkey       FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'dispatch_approvals_tenant_id_fkey') THEN
+    ALTER TABLE dispatch_approvals ADD CONSTRAINT dispatch_approvals_tenant_id_fkey  FOREIGN KEY (tenant_id)  REFERENCES tenants(id)  ON DELETE CASCADE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'dispatch_approvals_vehicle_id_fkey') THEN
+    ALTER TABLE dispatch_approvals ADD CONSTRAINT dispatch_approvals_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'dispatch_approvals_driver_id_fkey') THEN
+    ALTER TABLE dispatch_approvals ADD CONSTRAINT dispatch_approvals_driver_id_fkey  FOREIGN KEY (driver_id)  REFERENCES drivers(id)  ON DELETE CASCADE; END IF;
+  -- cross-table FKs
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'drivers_depot_id_fkey') THEN
+    ALTER TABLE drivers  ADD CONSTRAINT drivers_depot_id_fkey             FOREIGN KEY (depot_id)           REFERENCES depots(id)   ON DELETE SET NULL; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vehicles_assigned_driver_id_fkey') THEN
+    ALTER TABLE vehicles ADD CONSTRAINT vehicles_assigned_driver_id_fkey  FOREIGN KEY (assigned_driver_id) REFERENCES drivers(id)  ON DELETE SET NULL; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vehicles_depot_id_fkey') THEN
+    ALTER TABLE vehicles ADD CONSTRAINT vehicles_depot_id_fkey            FOREIGN KEY (depot_id)           REFERENCES depots(id)   ON DELETE SET NULL; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vehicles_route_id_fkey') THEN
+    ALTER TABLE vehicles ADD CONSTRAINT vehicles_route_id_fkey            FOREIGN KEY (route_id)           REFERENCES routes(id)   ON DELETE SET NULL; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'drivers_user_id_fkey') THEN
+    ALTER TABLE drivers  ADD CONSTRAINT drivers_user_id_fkey              FOREIGN KEY (user_id)            REFERENCES users(id)    ON DELETE SET NULL; END IF;
+END $$;
+
+-- S6. UNIQUE CONSTRAINTS  (remove stale global constraints, add tenant-scoped ones)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'drivers_employee_id_key')    THEN ALTER TABLE drivers  DROP CONSTRAINT drivers_employee_id_key;    END IF;
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'drivers_license_number_key') THEN ALTER TABLE drivers  DROP CONSTRAINT drivers_license_number_key; END IF;
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vehicles_registration_key')  THEN ALTER TABLE vehicles DROP CONSTRAINT vehicles_registration_key;  END IF;
+END $$;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'drivers_employee_id_tenant_unique') THEN
+    ALTER TABLE drivers  ADD CONSTRAINT drivers_employee_id_tenant_unique  UNIQUE (tenant_id, employee_id);    END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'drivers_license_tenant_unique') THEN
+    ALTER TABLE drivers  ADD CONSTRAINT drivers_license_tenant_unique       UNIQUE (tenant_id, license_number); END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vehicles_registration_tenant_unique') THEN
+    ALTER TABLE vehicles ADD CONSTRAINT vehicles_registration_tenant_unique UNIQUE (tenant_id, registration);   END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vehicles_qr_code_key') THEN
+    ALTER TABLE vehicles ADD CONSTRAINT vehicles_qr_code_key                UNIQUE (qr_code);                   END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'dispatch_approvals_qr_payload_key') THEN
+    ALTER TABLE dispatch_approvals ADD CONSTRAINT dispatch_approvals_qr_payload_key UNIQUE (qr_payload);        END IF;
+END $$;
+
+-- S7. INDEXES (CREATE INDEX IF NOT EXISTS for all)
+-- Tenant lookups
+CREATE INDEX IF NOT EXISTS idx_tenants_slug               ON tenants(slug);
+CREATE INDEX IF NOT EXISTS idx_users_tenant               ON users(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_depots_tenant              ON depots(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_drivers_tenant             ON drivers(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_vehicles_tenant            ON vehicles(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_trips_tenant               ON trips(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_geofences_tenant           ON geofences(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_alerts_tenant              ON alerts(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_tenant         ON maintenance(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_scores_tenant              ON driver_scores(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_routes_tenant              ON routes(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_dispatch_approvals_tenant  ON dispatch_approvals(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_dispatch_approvals_qr      ON dispatch_approvals(qr_payload);
+-- Compound
+CREATE INDEX IF NOT EXISTS idx_vehicles_tenant_status     ON vehicles(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_alerts_tenant_unread       ON alerts(tenant_id, is_read) WHERE is_read = false;
+CREATE INDEX IF NOT EXISTS idx_drivers_tenant_status      ON drivers(tenant_id, status);
+-- Common B-Tree
+CREATE INDEX IF NOT EXISTS idx_vehicles_status            ON vehicles(status);
+CREATE INDEX IF NOT EXISTS idx_vehicles_type              ON vehicles(type);
+CREATE INDEX IF NOT EXISTS idx_vehicles_driver            ON vehicles(assigned_driver_id);
+CREATE INDEX IF NOT EXISTS idx_vehicles_depot             ON vehicles(depot_id);
+CREATE INDEX IF NOT EXISTS idx_vehicles_route             ON vehicles(route_id);
+CREATE INDEX IF NOT EXISTS idx_telemetry_vid_time         ON telemetry(vehicle_id, recorded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_telemetry_time             ON telemetry(recorded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_trips_vehicle              ON trips(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_trips_driver               ON trips(driver_id);
+CREATE INDEX IF NOT EXISTS idx_trips_status               ON trips(status);
+CREATE INDEX IF NOT EXISTS idx_alerts_vehicle             ON alerts(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_alerts_type                ON alerts(type);
+CREATE INDEX IF NOT EXISTS idx_alerts_severity            ON alerts(severity);
+CREATE INDEX IF NOT EXISTS idx_alerts_occurred            ON alerts(occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_alerts_unread              ON alerts(is_read) WHERE is_read = FALSE;
+CREATE INDEX IF NOT EXISTS idx_driver_scores_driver       ON driver_scores(driver_id);
+CREATE INDEX IF NOT EXISTS idx_driver_scores_date         ON driver_scores(period_date DESC);
+CREATE INDEX IF NOT EXISTS idx_maintenance_vehicle        ON maintenance(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_status         ON maintenance(status);
+-- Spatial GIST
+CREATE INDEX IF NOT EXISTS idx_vehicles_location          ON vehicles  USING GIST(current_location);
+CREATE INDEX IF NOT EXISTS idx_telemetry_location         ON telemetry USING GIST(location);
+CREATE INDEX IF NOT EXISTS idx_geofences_boundary         ON geofences USING GIST(boundary);
+CREATE INDEX IF NOT EXISTS idx_depots_location            ON depots    USING GIST(location);
+CREATE INDEX IF NOT EXISTS idx_alerts_location            ON alerts    USING GIST(location);
+CREATE INDEX IF NOT EXISTS idx_routes_path                ON routes    USING GIST(path);
+-- Trigram / GIN
+CREATE INDEX IF NOT EXISTS idx_vehicles_reg_trgm          ON vehicles USING GIN(registration gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_drivers_name_trgm          ON drivers  USING GIN(full_name gin_trgm_ops);
+
+DO $$ BEGIN RAISE NOTICE '    [OK] all indexes created / verified'; END $$;
+
+-- S8. UPDATED_AT FUNCTION (CREATE OR REPLACE -- always safe)
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
+$$;
+
+-- S9. TRIGGERS (only create when not already present)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='trg_users_updated_at')       THEN CREATE TRIGGER trg_users_updated_at       BEFORE UPDATE ON users       FOR EACH ROW EXECUTE FUNCTION update_updated_at(); END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='trg_vehicles_updated_at')    THEN CREATE TRIGGER trg_vehicles_updated_at    BEFORE UPDATE ON vehicles    FOR EACH ROW EXECUTE FUNCTION update_updated_at(); END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='trg_drivers_updated_at')     THEN CREATE TRIGGER trg_drivers_updated_at     BEFORE UPDATE ON drivers     FOR EACH ROW EXECUTE FUNCTION update_updated_at(); END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='trg_tenants_updated_at')     THEN CREATE TRIGGER trg_tenants_updated_at     BEFORE UPDATE ON tenants     FOR EACH ROW EXECUTE FUNCTION update_updated_at(); END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='trg_trips_updated_at')       THEN CREATE TRIGGER trg_trips_updated_at       BEFORE UPDATE ON trips       FOR EACH ROW EXECUTE FUNCTION update_updated_at(); END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='trg_geofences_updated_at')   THEN CREATE TRIGGER trg_geofences_updated_at   BEFORE UPDATE ON geofences   FOR EACH ROW EXECUTE FUNCTION update_updated_at(); END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='trg_maintenance_updated_at') THEN CREATE TRIGGER trg_maintenance_updated_at BEFORE UPDATE ON maintenance  FOR EACH ROW EXECUTE FUNCTION update_updated_at(); END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='routes_updated_at')          THEN CREATE TRIGGER routes_updated_at          BEFORE UPDATE ON routes       FOR EACH ROW EXECUTE FUNCTION update_updated_at(); END IF;
+END $$;
+
+DO $$ BEGIN RAISE NOTICE '    [OK] triggers created / verified'; END $$;
+
+-- S10. VIEWS & UTILITY FUNCTIONS (CREATE OR REPLACE -- always idempotent)
+
+CREATE OR REPLACE VIEW v_fleet_live AS
+SELECT
+  v.id, v.tenant_id,
+  v.registration,
+  v.make || ' ' || v.model        AS vehicle_name,
+  v.make, v.model, v.year, v.type, v.color,
+  v.status,
+  v.current_speed, v.current_heading,
+  v.current_fuel,  v.current_odometer,
+  v.engine_on, v.health_score, v.last_seen,
+  v.fuel_capacity, v.max_speed,
+  ST_X(v.current_location)               AS longitude,
+  ST_Y(v.current_location)               AS latitude,
+  ST_AsGeoJSON(v.current_location)::json AS location_geojson,
+  d.id           AS driver_id,
+  d.full_name    AS driver_name,
+  d.phone        AS driver_phone,
+  d.safety_score AS driver_score,
+  dp.id          AS depot_id,
+  dp.name        AS depot_name,
+  t.name         AS tenant_name,
+  COALESCE(a.unread_count, 0) AS unread_alerts
+FROM vehicles v
+LEFT JOIN drivers d  ON v.assigned_driver_id = d.id
+LEFT JOIN depots  dp ON v.depot_id = dp.id
+LEFT JOIN tenants t  ON v.tenant_id = t.id
+LEFT JOIN (
+  SELECT vehicle_id, COUNT(*) AS unread_count
+  FROM alerts
+  WHERE is_read = false AND occurred_at > NOW() - INTERVAL '24 hours'
+  GROUP BY vehicle_id
+) a ON a.vehicle_id = v.id;
+
+CREATE OR REPLACE FUNCTION tenant_kpi(p_tenant_id UUID)
+RETURNS TABLE (
+  total_vehicles   BIGINT,  active_vehicles  BIGINT,
+  idle_vehicles    BIGINT,  offline_vehicles BIGINT,
+  avg_speed        NUMERIC, avg_fuel         NUMERIC,
+  avg_health       NUMERIC, unread_alerts    BIGINT,
+  critical_alerts  BIGINT,  active_trips     BIGINT,
+  total_drivers    BIGINT,  avg_driver_score NUMERIC
+) LANGUAGE SQL STABLE AS $$
+  SELECT
+    COUNT(*)                                                      AS total_vehicles,
+    COUNT(*) FILTER (WHERE status = 'active')                     AS active_vehicles,
+    COUNT(*) FILTER (WHERE status = 'idle')                       AS idle_vehicles,
+    COUNT(*) FILTER (WHERE status = 'offline')                    AS offline_vehicles,
+    ROUND(AVG(current_speed) FILTER (WHERE status='active')::NUMERIC, 1),
+    ROUND(AVG(current_fuel)::NUMERIC, 1),
+    ROUND(AVG(health_score)::NUMERIC, 1),
+    (SELECT COUNT(*) FROM alerts  WHERE tenant_id=p_tenant_id AND is_read=false),
+    (SELECT COUNT(*) FROM alerts  WHERE tenant_id=p_tenant_id AND severity='critical' AND is_read=false),
+    (SELECT COUNT(*) FROM trips   WHERE tenant_id=p_tenant_id AND status='active'),
+    (SELECT COUNT(*) FROM drivers WHERE tenant_id=p_tenant_id AND status='active'),
+    (SELECT ROUND(AVG(safety_score)::NUMERIC,1) FROM drivers WHERE tenant_id=p_tenant_id AND status='active')
+  FROM vehicles WHERE tenant_id = p_tenant_id;
+$$;
+
+DO $$ BEGIN RAISE NOTICE '    [OK] views + functions created / verified'; END $$;
+DO $$ BEGIN RAISE NOTICE '=== [S] Schema Bootstrap complete -- proceeding to seed data ==='; END $$;
+
+
 DO $$ BEGIN RAISE NOTICE '=== CloudNext Fleet — 7-Tenant Seed ==='; END $$;
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- 0. CLEAN previous seed data (idempotent re-run)
 -- ──────────────────────────────────────────────────────────────────────────────
---DELETE FROM dispatch_approvals WHERE tenant_id IN (
---  SELECT id FROM tenants WHERE slug IN (
---    'cloudnext-technologies','naqel-express','enoc-fleet',
---    'q-logistics','asyad-group','agility-logistics','blz-operators'
---  )
---);
+DELETE FROM dispatch_approvals WHERE tenant_id IN (
+  SELECT id FROM tenants WHERE slug IN (
+    'cloudnext-technologies','naqel-express','enoc-fleet',
+    'q-logistics','asyad-group','agility-logistics','blz-operators'
+  )
+);
 DELETE FROM driver_scores  WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('cloudnext-technologies','naqel-express','enoc-fleet','q-logistics','asyad-group','agility-logistics','blz-operators'));
 DELETE FROM maintenance    WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('cloudnext-technologies','naqel-express','enoc-fleet','q-logistics','asyad-group','agility-logistics','blz-operators'));
 DELETE FROM alerts         WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('cloudnext-technologies','naqel-express','enoc-fleet','q-logistics','asyad-group','agility-logistics','blz-operators'));
@@ -723,10 +1286,10 @@ SELECT
   false
 FROM vehicles v
 WHERE v.tenant_id IN (
-  '00000001-0001-0001-0001-000000000001','00000002-0002-0002-0002-000000000002',
-  '00000003-0003-0003-0003-000000000003','00000004-0004-0004-0004-000000000004',
-  '00000005-0005-0005-0005-000000000005','00000006-0006-0006-0006-000000000006',
-  '00000007-0007-0007-0007-000000000007'
+  'aaaaaaaa-0001-0001-0001-000000000001','aaaaaaaa-0002-0002-0002-000000000002',
+  'aaaaaaaa-0003-0003-0003-000000000003','aaaaaaaa-0004-0004-0004-000000000004',
+  'aaaaaaaa-0005-0005-0005-000000000005','aaaaaaaa-0006-0006-0006-000000000006',
+  'aaaaaaaa-0007-0007-0007-000000000007'
 )
 AND v.status = 'active';
 
