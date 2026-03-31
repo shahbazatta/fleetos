@@ -94,11 +94,12 @@ function getRoutes(lng, lat) {
 // ── Simulator Core ────────────────────────────────────────────────────────────
 async function initSimulator() {
   const result = await query(`
-    SELECT id, registration, current_speed, current_heading,
-           ST_X(current_location) as lng, ST_Y(current_location) as lat,
-           current_fuel, current_odometer, max_speed, status
-    FROM vehicles
-    WHERE status IN ('active', 'idle')
+    SELECT v.id, v.registration, v.current_speed, v.current_heading,
+           ST_X(v.current_location) as lng, ST_Y(v.current_location) as lat,
+           v.current_fuel, v.current_odometer, v.max_speed, v.status,
+           v.tenant_id
+    FROM vehicles v
+    WHERE v.status IN ('active', 'idle')
   `);
 
   for (const v of result.rows) {
@@ -110,6 +111,7 @@ async function initSimulator() {
     vehicleStates.set(v.id, {
       id: v.id,
       registration: v.registration,
+      tenant_id:   v.tenant_id,
       lng,
       lat,
       speed:       parseFloat(v.current_speed)   || 0,
@@ -251,13 +253,15 @@ async function tick(broadcastFn) {
 }
 
 async function generateAlerts(state) {
+  const tid = state.tenant_id;
+
   // Speeding
   if (state.speed > state.maxSpeed * 0.95 && Math.random() < 0.1) {
     await query(`
-      INSERT INTO alerts (vehicle_id, type, severity, title, message, location, speed)
-      VALUES ($1,'speeding','critical','Speed Limit Exceeded',$2,
-              ST_SetSRID(ST_MakePoint($3,$4),4326),$5)
-    `, [state.id,
+      INSERT INTO alerts (tenant_id, vehicle_id, type, severity, title, message, location, speed)
+      VALUES ($1,$2,'speeding','critical','Speed Limit Exceeded',$3,
+              ST_SetSRID(ST_MakePoint($4,$5),4326),$6)
+    `, [tid, state.id,
         `${state.registration} travelling at ${Math.round(state.speed)} km/h (limit: ${Math.round(state.maxSpeed)} km/h)`,
         state.lng, state.lat, Math.round(state.speed)]);
   }
@@ -265,25 +269,26 @@ async function generateAlerts(state) {
   // Low fuel
   if (state.fuel < 15 && Math.random() < 0.05) {
     await query(`
-      INSERT INTO alerts (vehicle_id, type, severity, title, message, location)
-      VALUES ($1,'low_fuel','warning','Low Fuel Warning',$2,ST_SetSRID(ST_MakePoint($3,$4),4326))
-    `, [state.id, `${state.registration} fuel at ${Math.round(state.fuel)}%`, state.lng, state.lat]);
+      INSERT INTO alerts (tenant_id, vehicle_id, type, severity, title, message, location)
+      VALUES ($1,$2,'low_fuel','warning','Low Fuel Warning',$3,ST_SetSRID(ST_MakePoint($4,$5),4326))
+    `, [tid, state.id, `${state.registration} fuel at ${Math.round(state.fuel)}%`, state.lng, state.lat]);
   }
 
   // Harsh braking
   if (state.speed > 50 && Math.random() < 0.02) {
     await query(`
-      INSERT INTO alerts (vehicle_id, type, severity, title, message, location)
-      VALUES ($1,'harsh_braking','warning','Harsh Braking Detected',$2,ST_SetSRID(ST_MakePoint($3,$4),4326))
-    `, [state.id, `Sudden deceleration event on ${state.registration}`, state.lng, state.lat]);
+      INSERT INTO alerts (tenant_id, vehicle_id, type, severity, title, message, location)
+      VALUES ($1,$2,'harsh_braking','warning','Harsh Braking Detected',$3,ST_SetSRID(ST_MakePoint($4,$5),4326))
+    `, [tid, state.id, `Sudden deceleration event on ${state.registration}`, state.lng, state.lat]);
   }
 
-  // Geofence exit detection
+  // Geofence exit detection (tenant-scoped)
   try {
     const gfResult = await query(`
       SELECT g.id, g.name
       FROM geofences g
-      WHERE g.is_active = true
+      WHERE g.tenant_id = $4
+        AND g.is_active = true
         AND NOT ST_Within(ST_SetSRID(ST_MakePoint($1,$2),4326), g.boundary)
         AND EXISTS (
           SELECT 1 FROM telemetry t
@@ -293,16 +298,32 @@ async function generateAlerts(state) {
           ORDER BY t.recorded_at DESC LIMIT 1
         )
       LIMIT 1
-    `, [state.lng, state.lat, state.id]);
+    `, [state.lng, state.lat, state.id, tid]);
 
     if (gfResult.rows.length > 0) {
       const gf = gfResult.rows[0];
       await query(`
-        INSERT INTO alerts (vehicle_id, geofence_id, type, severity, title, message, location)
-        VALUES ($1,$2,'geofence_exit','info','Geofence Exit',$3,ST_SetSRID(ST_MakePoint($4,$5),4326))
-      `, [state.id, gf.id, `${state.registration} exited geofence: ${gf.name}`, state.lng, state.lat]);
+        INSERT INTO alerts (tenant_id, vehicle_id, geofence_id, type, severity, title, message, location)
+        VALUES ($1,$2,$3,'geofence_exit','info','Geofence Exit',$4,ST_SetSRID(ST_MakePoint($5,$6),4326))
+      `, [tid, state.id, gf.id, `${state.registration} exited geofence: ${gf.name}`, state.lng, state.lat]);
     }
   } catch (_) { /* silent */ }
 }
 
-module.exports = { initSimulator, tick, vehicleStates };
+// startSimulator — called from index.js when SIMULATE_VEHICLES=true
+function startSimulator() {
+  const intervalMs = parseInt(process.env.SIMULATION_INTERVAL_MS || '3000');
+  let broadcastFn = null;
+
+  // Allow WebSocket service to register a broadcast callback
+  startSimulator.setBroadcast = (fn) => { broadcastFn = fn; };
+
+  initSimulator()
+    .then(() => {
+      setInterval(() => tick(broadcastFn).catch(err => console.error('Simulator tick error:', err)), intervalMs);
+      console.log(`✓ Simulator running — interval ${intervalMs}ms, all tenants`);
+    })
+    .catch(err => console.error('Simulator init error:', err));
+}
+
+module.exports = { initSimulator, tick, vehicleStates, startSimulator };

@@ -1,0 +1,744 @@
+{
+  "info": {
+    "name": "CloudNext Fleet Management API",
+    "description": "Complete API collection for CloudNext Fleet Management System.\n\nBase URL: http://localhost:3001/api\n\nAuth: Set {{token}} variable after calling POST /auth/login.\nSet {{tenant_id}} for superadmin cross-tenant queries.\n\nDefault test credentials (from fleet_multitenant_seed.sql):\n- Superadmin: superadmin@cloudnext.solutions / password\n- Tenant admin: admin@naqel-express.fleet / Fleet@2026\n- Operator:     operator@naqel-express.fleet / Fleet@2026\n- Driver:       drv001@naqel-express.fleet / Fleet@2026",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3001/api" },
+    { "key": "token",    "value": "" },
+    { "key": "tenant_id","value": "" },
+    { "key": "vehicle_id","value": "" },
+    { "key": "driver_id", "value": "" },
+    { "key": "route_id",  "value": "" },
+    { "key": "depot_id",  "value": "" },
+    { "key": "geofence_id","value": "" },
+    { "key": "alert_id",  "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "var r = pm.response.json();",
+            "if (r.token) {",
+            "  pm.collectionVariables.set('token', r.token);",
+            "  if (r.user && r.user.tenant_id) pm.collectionVariables.set('tenant_id', r.user.tenant_id);",
+            "  console.log('Token saved. Role:', r.user.role);",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@naqel-express.fleet\",\n  \"password\": \"Fleet@2026\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth","login"] }
+          }
+        },
+        {
+          "name": "Login — Superadmin",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "var r = pm.response.json();",
+            "if (r.token) pm.collectionVariables.set('token', r.token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@cloudnext.solutions\",\n  \"password\": \"password\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth","login"] }
+          }
+        },
+        {
+          "name": "Login — Driver (Viewer)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"drv001@naqel-express.fleet\",\n  \"password\": \"Fleet@2026\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth","login"] }
+          }
+        },
+        {
+          "name": "Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth","me"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Vehicles",
+      "item": [
+        {
+          "name": "List Vehicles",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/vehicles?status=active",
+              "host": ["{{base_url}}"], "path": ["vehicles"],
+              "query": [
+                { "key": "status", "value": "active", "description": "active|idle|offline|maintenance|alert" },
+                { "key": "type",   "value": "", "disabled": true, "description": "truck|van|car|bus|motorcycle|heavy" },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Vehicles — GeoJSON",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/vehicles/geojson", "host": ["{{base_url}}"], "path": ["vehicles","geojson"] }
+          }
+        },
+        {
+          "name": "Get Vehicle by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/vehicles/{{vehicle_id}}", "host": ["{{base_url}}"], "path": ["vehicles","{{vehicle_id}}"] }
+          }
+        },
+        {
+          "name": "Get Vehicle Trail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/vehicles/{{vehicle_id}}/trail?minutes=60",
+              "host": ["{{base_url}}"], "path": ["vehicles","{{vehicle_id}}","trail"],
+              "query": [{ "key": "minutes", "value": "60" }]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Fleet Management — Vehicles",
+      "item": [
+        {
+          "name": "FM List Vehicles",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/fm/vehicles", "host": ["{{base_url}}"], "path": ["fm","vehicles"] }
+          }
+        },
+        {
+          "name": "FM Create Vehicle",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "var r = pm.response.json();",
+            "if (r.vehicle) pm.collectionVariables.set('vehicle_id', r.vehicle.id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registration\": \"TEST-001\",\n  \"make\": \"Isuzu\",\n  \"model\": \"NPR\",\n  \"year\": 2023,\n  \"type\": \"truck\",\n  \"color\": \"White\",\n  \"fuel_type\": \"diesel\",\n  \"fuel_capacity\": 80,\n  \"max_speed\": 120\n}"
+            },
+            "url": { "raw": "{{base_url}}/fm/vehicles", "host": ["{{base_url}}"], "path": ["fm","vehicles"] }
+          }
+        },
+        {
+          "name": "FM Update Vehicle",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"color\": \"Blue\",\n  \"notes\": \"Updated via API\"\n}" },
+            "url": { "raw": "{{base_url}}/fm/vehicles/{{vehicle_id}}", "host": ["{{base_url}}"], "path": ["fm","vehicles","{{vehicle_id}}"] }
+          }
+        },
+        {
+          "name": "FM Assign Driver to Vehicle",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"driver_id\": \"{{driver_id}}\"\n}" },
+            "url": { "raw": "{{base_url}}/fm/vehicles/{{vehicle_id}}/assign-driver", "host": ["{{base_url}}"], "path": ["fm","vehicles","{{vehicle_id}}","assign-driver"] }
+          }
+        },
+        {
+          "name": "FM Assign Route to Vehicle",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"route_id\": \"{{route_id}}\"\n}" },
+            "url": { "raw": "{{base_url}}/fm/vehicles/{{vehicle_id}}/assign-route", "host": ["{{base_url}}"], "path": ["fm","vehicles","{{vehicle_id}}","assign-route"] }
+          }
+        },
+        {
+          "name": "FM Delete Vehicle",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/fm/vehicles/{{vehicle_id}}", "host": ["{{base_url}}"], "path": ["fm","vehicles","{{vehicle_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Fleet Management — Drivers",
+      "item": [
+        {
+          "name": "FM List Drivers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/fm/drivers",
+              "host": ["{{base_url}}"], "path": ["fm","drivers"],
+              "query": [
+                { "key": "status", "value": "active", "disabled": true },
+                { "key": "search", "value": "",       "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "FM Get Driver by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/fm/drivers/{{driver_id}}", "host": ["{{base_url}}"], "path": ["fm","drivers","{{driver_id}}"] }
+          }
+        },
+        {
+          "name": "FM Create Driver",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "var r = pm.response.json();",
+            "if (r.driver) pm.collectionVariables.set('driver_id', r.driver.id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_id\": \"TST-D001\",\n  \"full_name\": \"Test Driver\",\n  \"phone\": \"+966-55-0000001\",\n  \"email\": \"testdriver@company.com\",\n  \"license_number\": \"TST-LIC-001\",\n  \"license_class\": \"HTV\",\n  \"license_expiry\": \"2028-12-31\",\n  \"mobile_email\": \"testdriver@naqel-express.fleet\",\n  \"mobile_password\": \"Driver@2026\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/fm/drivers", "host": ["{{base_url}}"], "path": ["fm","drivers"] }
+          }
+        },
+        {
+          "name": "FM Update Driver",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"active\",\n  \"phone\": \"+966-55-9999999\"\n}" },
+            "url": { "raw": "{{base_url}}/fm/drivers/{{driver_id}}", "host": ["{{base_url}}"], "path": ["fm","drivers","{{driver_id}}"] }
+          }
+        },
+        {
+          "name": "FM Assign Vehicle to Driver",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"vehicle_id\": \"{{vehicle_id}}\"\n}" },
+            "url": { "raw": "{{base_url}}/fm/drivers/{{driver_id}}/assign", "host": ["{{base_url}}"], "path": ["fm","drivers","{{driver_id}}","assign"] }
+          }
+        },
+        {
+          "name": "FM Delete Driver",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/fm/drivers/{{driver_id}}", "host": ["{{base_url}}"], "path": ["fm","drivers","{{driver_id}}"] }
+          }
+        },
+        {
+          "name": "Drivers List (legacy /drivers)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/drivers", "host": ["{{base_url}}"], "path": ["drivers"] }
+          }
+        },
+        {
+          "name": "Drivers Available (unassigned)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/drivers/available", "host": ["{{base_url}}"], "path": ["drivers","available"] }
+          }
+        },
+        {
+          "name": "Driver Safety Scores",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/drivers/{{driver_id}}/scores", "host": ["{{base_url}}"], "path": ["drivers","{{driver_id}}","scores"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Fleet Management — Routes",
+      "item": [
+        {
+          "name": "FM List Routes",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/fm/routes", "host": ["{{base_url}}"], "path": ["fm","routes"] }
+          }
+        },
+        {
+          "name": "FM Get Route by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/fm/routes/{{route_id}}", "host": ["{{base_url}}"], "path": ["fm","routes","{{route_id}}"] }
+          }
+        },
+        {
+          "name": "FM Create Route",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "var r = pm.response.json();",
+            "if (r.route) pm.collectionVariables.set('route_id', r.route.id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Route\",\n  \"description\": \"API test route\",\n  \"color\": \"#00d4e8\",\n  \"duration_min\": 30,\n  \"coordinates\": [\n    [46.673, 24.710],\n    [46.700, 24.770],\n    [46.750, 24.780]\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/fm/routes", "host": ["{{base_url}}"], "path": ["fm","routes"] }
+          }
+        },
+        {
+          "name": "FM Update Route",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Route Name\",\n  \"color\": \"#ef4444\",\n  \"is_active\": true\n}" },
+            "url": { "raw": "{{base_url}}/fm/routes/{{route_id}}", "host": ["{{base_url}}"], "path": ["fm","routes","{{route_id}}"] }
+          }
+        },
+        {
+          "name": "FM Delete Route",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/fm/routes/{{route_id}}", "host": ["{{base_url}}"], "path": ["fm","routes","{{route_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Fleet Management — Depots",
+      "item": [
+        {
+          "name": "FM List Depots",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/fm/depots", "host": ["{{base_url}}"], "path": ["fm","depots"] }
+          }
+        },
+        {
+          "name": "FM Create Depot",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "var r = pm.response.json();",
+            "if (r.depot) pm.collectionVariables.set('depot_id', r.depot.id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Depot\",\n  \"address\": \"King Fahd Road\",\n  \"city\": \"Riyadh\",\n  \"lng\": 46.673,\n  \"lat\": 24.710,\n  \"capacity\": 30,\n  \"manager\": \"Depot Manager\",\n  \"phone\": \"+966-55-1234567\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/fm/depots", "host": ["{{base_url}}"], "path": ["fm","depots"] }
+          }
+        },
+        {
+          "name": "FM Update Depot",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Depot Name\",\n  \"capacity\": 50\n}" },
+            "url": { "raw": "{{base_url}}/fm/depots/{{depot_id}}", "host": ["{{base_url}}"], "path": ["fm","depots","{{depot_id}}"] }
+          }
+        },
+        {
+          "name": "FM Delete Depot",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/fm/depots/{{depot_id}}", "host": ["{{base_url}}"], "path": ["fm","depots","{{depot_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Fleet Management — Geofences",
+      "item": [
+        {
+          "name": "FM List Geofences",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/fm/geofences", "host": ["{{base_url}}"], "path": ["fm","geofences"] }
+          }
+        },
+        {
+          "name": "FM Create Geofence",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "var r = pm.response.json();",
+            "if (r.geofence) pm.collectionVariables.set('geofence_id', r.geofence.id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Zone\",\n  \"description\": \"API test geofence\",\n  \"color\": \"#00d4e8\",\n  \"zone_type\": \"delivery\",\n  \"alert_on_enter\": true,\n  \"alert_on_exit\": true,\n  \"coordinates\": [\n    [46.668, 24.706],\n    [46.680, 24.706],\n    [46.680, 24.715],\n    [46.668, 24.715],\n    [46.668, 24.706]\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/fm/geofences", "host": ["{{base_url}}"], "path": ["fm","geofences"] }
+          }
+        },
+        {
+          "name": "FM Update Geofence",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Zone\",\n  \"color\": \"#f59e0b\",\n  \"is_active\": true\n}" },
+            "url": { "raw": "{{base_url}}/fm/geofences/{{geofence_id}}", "host": ["{{base_url}}"], "path": ["fm","geofences","{{geofence_id}}"] }
+          }
+        },
+        {
+          "name": "FM Delete Geofence",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/fm/geofences/{{geofence_id}}", "host": ["{{base_url}}"], "path": ["fm","geofences","{{geofence_id}}"] }
+          }
+        },
+        {
+          "name": "Geofences GeoJSON",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/geofences/geojson", "host": ["{{base_url}}"], "path": ["geofences","geojson"] }
+          }
+        },
+        {
+          "name": "Geofence Vehicle Status",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/geofences/vehicle-status", "host": ["{{base_url}}"], "path": ["geofences","vehicle-status"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Fleet Management — Summary",
+      "item": [
+        {
+          "name": "FM Summary",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/fm/summary", "host": ["{{base_url}}"], "path": ["fm","summary"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "List Alerts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/alerts?limit=50",
+              "host": ["{{base_url}}"], "path": ["alerts"],
+              "query": [
+                { "key": "limit",    "value": "50" },
+                { "key": "offset",   "value": "0",      "disabled": true },
+                { "key": "severity", "value": "critical","disabled": true, "description": "critical|warning|info" },
+                { "key": "type",     "value": "",        "disabled": true, "description": "speeding|low_fuel|harsh_braking|geofence_exit|offline|sos" },
+                { "key": "unread",   "value": "true",    "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Alert Stats",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/alerts/stats", "host": ["{{base_url}}"], "path": ["alerts","stats"] }
+          }
+        },
+        {
+          "name": "Mark Alert Read",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{base_url}}/alerts/{{alert_id}}/read", "host": ["{{base_url}}"], "path": ["alerts","{{alert_id}}","read"] }
+          }
+        },
+        {
+          "name": "Mark All Alerts Read",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{base_url}}/alerts/read-all", "host": ["{{base_url}}"], "path": ["alerts","read-all"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Fleet Summary KPIs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/analytics/fleet-summary", "host": ["{{base_url}}"], "path": ["analytics","fleet-summary"] }
+          }
+        },
+        {
+          "name": "Fuel Trend",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/analytics/fuel-trend?days=7",
+              "host": ["{{base_url}}"], "path": ["analytics","fuel-trend"],
+              "query": [{ "key": "days", "value": "7" }]
+            }
+          }
+        },
+        {
+          "name": "Alert Heatmap",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/analytics/alert-heatmap", "host": ["{{base_url}}"], "path": ["analytics","alert-heatmap"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Tenants (Superadmin)",
+      "item": [
+        {
+          "name": "List Tenants",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants", "host": ["{{base_url}}"], "path": ["tenants"] }
+          }
+        },
+        {
+          "name": "Get Tenant by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}", "host": ["{{base_url}}"], "path": ["tenants","{{tenant_id}}"] }
+          }
+        },
+        {
+          "name": "Create Tenant",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Logistics Co\",\n  \"slug\": \"new-logistics\",\n  \"country\": \"UAE\",\n  \"city\": \"Abu Dhabi\",\n  \"email\": \"ops@newlogistics.ae\",\n  \"plan\": \"standard\",\n  \"max_vehicles\": 30,\n  \"max_users\": 10\n}"
+            },
+            "url": { "raw": "{{base_url}}/tenants", "host": ["{{base_url}}"], "path": ["tenants"] }
+          }
+        },
+        {
+          "name": "Update Tenant",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"plan\": \"pro\",\n  \"max_vehicles\": 60\n}" },
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}", "host": ["{{base_url}}"], "path": ["tenants","{{tenant_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Tenant",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/tenants/{{tenant_id}}", "host": ["{{base_url}}"], "path": ["tenants","{{tenant_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/users", "host": ["{{base_url}}"], "path": ["users"] }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@naqel-express.fleet\",\n  \"password\": \"Fleet@2026\",\n  \"full_name\": \"New Operator\",\n  \"role\": \"operator\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/users", "host": ["{{base_url}}"], "path": ["users"] }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"full_name\": \"Updated Name\",\n  \"role\": \"operator\"\n}" },
+            "url": { "raw": "{{base_url}}/users/:userId", "host": ["{{base_url}}"], "path": ["users",":userId"] }
+          }
+        },
+        {
+          "name": "Reset User Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"new_password\": \"NewFleet@2026\"\n}" },
+            "url": { "raw": "{{base_url}}/users/:userId/reset-password", "host": ["{{base_url}}"], "path": ["users",":userId","reset-password"] }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/users/:userId", "host": ["{{base_url}}"], "path": ["users",":userId"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Mobile (Driver App)",
+      "item": [
+        {
+          "name": "Mobile — Get Me",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/mobile/me", "host": ["{{base_url}}"], "path": ["mobile","me"] }
+          }
+        },
+        {
+          "name": "Mobile — Pair Bus (Scan QR)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qr_code\": \"cloudnext://bus/{{vehicle_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/mobile/pair-bus", "host": ["{{base_url}}"], "path": ["mobile","pair-bus"] }
+          }
+        },
+        {
+          "name": "Mobile — Send Telemetry",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_id\": \"{{vehicle_id}}\",\n  \"lat\": 24.710,\n  \"lng\": 46.673,\n  \"speed\": 65.5,\n  \"heading\": 180,\n  \"fuel_level\": 72.3,\n  \"engine_on\": true\n}"
+            },
+            "url": { "raw": "{{base_url}}/mobile/telemetry", "host": ["{{base_url}}"], "path": ["mobile","telemetry"] }
+          }
+        },
+        {
+          "name": "Mobile — Get Driver Route",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/mobile/driver/route", "host": ["{{base_url}}"], "path": ["mobile","driver","route"] }
+          }
+        },
+        {
+          "name": "Mobile — Get Alerts",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/mobile/alerts", "host": ["{{base_url}}"], "path": ["mobile","alerts"] }
+          }
+        },
+        {
+          "name": "Mobile — Supervisor: List Buses",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/mobile/supervisor/buses", "host": ["{{base_url}}"], "path": ["mobile","supervisor","buses"] }
+          }
+        },
+        {
+          "name": "Mobile — Supervisor: Generate Dispatch QR",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_id\": \"{{vehicle_id}}\",\n  \"driver_id\": \"{{driver_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/mobile/dispatch/generate", "host": ["{{base_url}}"], "path": ["mobile","dispatch","generate"] }
+          }
+        },
+        {
+          "name": "Mobile — Driver: Approve Dispatch QR",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qr_payload\": \"cloudnext://dispatch/APPROVAL_UUID\",\n  \"vehicle_id\": \"{{vehicle_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/mobile/dispatch/approve", "host": ["{{base_url}}"], "path": ["mobile","dispatch","approve"] }
+          }
+        },
+        {
+          "name": "Mobile — End Trip",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trip_id\": \"TRIP_UUID\",\n  \"vehicle_id\": \"{{vehicle_id}}\",\n  \"distance_km\": 42.5\n}"
+            },
+            "url": { "raw": "{{base_url}}/mobile/trip/end", "host": ["{{base_url}}"], "path": ["mobile","trip","end"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Misc",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] }
+          }
+        },
+        {
+          "name": "Request Access (Sign Up)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"company\": \"Acme Logistics\",\n  \"email\": \"john@acme.com\",\n  \"phone\": \"+1-555-0000\",\n  \"message\": \"We have 50 vehicles and need a fleet solution.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/request-access", "host": ["{{base_url}}"], "path": ["request-access"] }
+          }
+        }
+      ]
+    }
+  ]
+}

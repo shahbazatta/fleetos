@@ -15,11 +15,7 @@ const usersRouter       = require('./routes/users');
 const tenantsRouter     = require('./routes/tenants');
 const { initWebSocket } = require('./services/websocket');
 
-// Fix for startSimulator
-const simulatorModule = require('./services/simulator');
-const startSimulator = typeof simulatorModule === 'function' 
-  ? simulatorModule 
-  : simulatorModule.startSimulator || simulatorModule.default;
+const { startSimulator } = require('./services/simulator');
 
 const transporter = require('./config/email');
 
