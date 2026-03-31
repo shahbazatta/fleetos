@@ -13,7 +13,7 @@ const fmRouter          = require('./routes/fleetManagement');
 const mobileRouter      = require('./routes/mobile');
 const usersRouter       = require('./routes/users');
 const tenantsRouter     = require('./routes/tenants');
-const { initWebSocket } = require('./services/websocket');
+const { initWebSocket, broadcast } = require('./services/websocket');
 
 const { startSimulator } = require('./services/simulator');
 
@@ -96,6 +96,7 @@ initWebSocket(server);
 if (process.env.SIMULATE_VEHICLES === 'true') {
   if (typeof startSimulator === 'function') {
     startSimulator();
+    startSimulator.setBroadcast(broadcast); // wire WebSocket → simulator
   } else {
     console.warn('⚠️  startSimulator is not a function. Simulator will not start.');
   }
