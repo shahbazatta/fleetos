@@ -9,7 +9,7 @@ export default function LoginPage() {
   const { t } = useTranslation();
   const { login, isLoading, error, token } = useAuthStore();
   const [view,     setView]    = useState<View>('login');
-  const [email,    setEmail]   = useState('admin@cloudnext.com');
+  const [email,    setEmail]   = useState('admin@firstcity.ai');
   const [password, setPassword] = useState('admin123');
 
   // Signup form fields
