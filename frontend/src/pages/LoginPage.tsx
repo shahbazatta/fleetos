@@ -189,29 +189,14 @@ const API_URL = 'https://20.153.153.24';
               <div style={{ marginTop: 24, textAlign: 'center' }}>
                 <button
                   onClick={() => setView('signup')}
-style={{
-  background: 'none',
-  border: 'none',
-  cursor: 'pointer',
-  color: '#00d4e8',
-  fontSize: '32px',
-  fontWeight: 800,
-  fontFamily: 'DM Sans, sans-serif',
-  textDecoration: 'underline',
-  textUnderlineOffset: '8px',
-  textDecorationThickness: '4px',
-  letterSpacing: '-0.02em',
-  transition: 'all 0.25s ease',
-}}
-
-onMouseEnter={(e) => {
-  e.currentTarget.style.color = '#00f0ff';
-  e.currentTarget.style.textDecorationThickness = '5px';
-}}
-onMouseLeave={(e) => {
-  e.currentTarget.style.color = '#ffffff';
-  e.currentTarget.style.textDecorationThickness = '3px';
-}}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'var(--text-muted, #5d7a9a)', fontSize: 13, fontWeight: 400,
+                    fontFamily: 'DM Sans, sans-serif', letterSpacing: 0,
+                    transition: 'color .15s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = '#00d4e8'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = '#5d7a9a'; }}
                 >
                   {t('login.request_access')}
                 </button>

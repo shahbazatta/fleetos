@@ -24,7 +24,7 @@ function Dropdown({ trigger, children }: { trigger: React.ReactNode; children: R
       <div onClick={() => setOpen(o => !o)} style={{ cursor: 'pointer' }}>{trigger}</div>
       {open && (
         <div style={{
-          position: 'absolute', top: '100%', right: 0, marginTop: 4,
+          position: 'absolute', top: '100%', insetInlineEnd: 0, marginTop: 4,
           background: '#0a1828', border: '1px solid rgba(0,212,232,.15)',
           borderRadius: 10, padding: '6px 0', zIndex: 200,
           boxShadow: '0 12px 40px rgba(0,0,0,.5)', minWidth: 160,
@@ -42,7 +42,7 @@ function DropItem({ label, active, onClick }: { label: string; active?: boolean;
   return (
     <button onClick={onClick} style={{
       display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-      padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+      padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'start',
       fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: active ? '#00d4e8' : '#8da4c2',
       fontWeight: active ? 600 : 400,
     }}>
@@ -82,8 +82,8 @@ export default function Navbar() {
   };
 
   const kpi = (val: string | number | undefined, label: string, color = colors.text) => (
-    <div style={{ textAlign: 'center', padding: '0 12px', borderRight: `1px solid rgba(255,255,255,.06)` }}>
-      <div style={{ fontSize: 18, fontWeight: 800, color, fontFamily: 'JetBrains Mono, monospace', lineHeight: 1 }}>{val ?? '—'}</div>
+    <div style={{ textAlign: 'center', padding: '0 12px', borderInlineEnd: `1px solid rgba(255,255,255,.06)` }}>
+      <div dir="ltr" style={{ fontSize: 18, fontWeight: 800, color, fontFamily: 'JetBrains Mono, monospace', lineHeight: 1 }}>{val ?? '—'}</div>
       <div style={{ fontSize: 9, color: colors.muted, marginTop: 2, letterSpacing: 1, textTransform: 'uppercase' }}>{label}</div>
     </div>
   );
@@ -124,7 +124,7 @@ export default function Navbar() {
       transition: 'background .2s, border-color .2s',
     }}>
       {/* Logo */}
-      <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 10, marginRight: 20, cursor: 'pointer' }}>
+      <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 10, marginInlineEnd: 20, cursor: 'pointer' }}>
         <svg width="26" height="30" viewBox="0 0 28 32" fill="none">
           <polygon points="14,1 27,8 27,24 14,31 1,24 1,8" fill="none" stroke={colors.cyan} strokeWidth="1.8"/>
           <polygon points="14,6 22,11 22,21 14,26 6,21 6,11" fill={`${colors.cyan}18`} stroke={colors.cyan} strokeWidth="0.8" strokeOpacity="0.5"/>
@@ -184,6 +184,7 @@ export default function Navbar() {
 
         {/* Live status */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: wsConnected ? '#22c55e' : '#ef4444' }}>
+          {wsConnected && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', animation: 'pulse 2s infinite', flexShrink: 0 }} />}
           {wsConnected ? <Wifi size={14} /> : <WifiOff size={14} />}
           <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10 }}>{wsConnected ? t('nav.live') : t('nav.offline')}</span>
         </div>
