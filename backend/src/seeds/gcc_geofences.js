@@ -1,5 +1,5 @@
 /**
- * GCC Extended Geofences Seed — CloudNext Fleet Management
+ * GCC Extended Geofences Seed — FirstCity AI Fleet Management
  * Adds 8–10 realistic geofences per tenant for all 6 GCC companies.
  *
  * Run AFTER gcc_data.js: node src/seeds/gcc_geofences.js

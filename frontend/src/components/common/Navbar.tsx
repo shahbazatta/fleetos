@@ -133,7 +133,7 @@ export default function Navbar() {
           <circle cx="14" cy="16" r="3" fill={colors.cyan}/>
         </svg>
         <div>
-          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: colors.text, letterSpacing: 0.5 }}>CLOUDNEXT</div>
+          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: colors.text, letterSpacing: 0.5 }}>FIRSTCITY AI</div>
           <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: colors.cyan, letterSpacing: 1.5 }}>FLEET MANAGEMENT</div>
         </div>
       </div>

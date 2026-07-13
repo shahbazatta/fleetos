@@ -62,7 +62,7 @@ app.post('/api/request-access', async (req, res) => {
 
   try {
     await transporter.sendMail({
-      from: `"CloudNext Fleet" <${process.env.SMTP_USER}>`,
+      from: `"FirstCity AI Fleet" <${process.env.SMTP_USER}>`,
       replyTo: email,
       to: 'info@cloudnext.solutions',
       subject: `Fleet Management Access Request — ${name}`,
@@ -76,7 +76,7 @@ app.post('/api/request-access', async (req, res) => {
           <p><strong>Message:</strong></p>
           <p style="background:#f8f9fa;padding:15px;border-left:4px solid #00d4e8">${message || '—'}</p>
           <hr>
-          <p style="color:#666;font-size:12px">Sent from the CloudNext Fleet Management login page.</p>
+          <p style="color:#666;font-size:12px">Sent from the FirstCity AI Fleet Management login page.</p>
         </div>
       `,
     });

@@ -1,5 +1,5 @@
 /**
- * GCC Sample Data Seed — CloudNext Fleet Management
+ * GCC Sample Data Seed — FirstCity AI Fleet Management
  * Tenants: Naqel Express · ENOC Fleet · Q-Logistics · Asyad Group · Agility Logistics · BLZ
  *
  * Run: node src/seeds/gcc_data.js
@@ -506,7 +506,7 @@ async function seedGCC() {
     // ── 1. Superadmin (if not exists) ───────────────────────────────────────
     await client.query(`
       INSERT INTO users (email, password_hash, full_name, role, is_active)
-      VALUES ('superadmin@cloudnext.com', $1, 'CloudNext Super Admin', 'superadmin', true)
+      VALUES ('superadmin@cloudnext.com', $1, 'FirstCity AI Super Admin', 'superadmin', true)
       ON CONFLICT (email) DO NOTHING
     `, [pwdHash]);
     console.log('  ✓ Superadmin (superadmin@cloudnext.com / Fleet@2024)');

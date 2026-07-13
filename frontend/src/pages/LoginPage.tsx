@@ -103,7 +103,7 @@ const API_URL = 'https://20.153.153.24';
             <circle cx="26" cy="30" r="6" fill="#00d4e8"/>
           </svg>
           <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color: '#e8eaf0', letterSpacing: 1 }}>
-            CLOUDNEXT
+            FIRSTCITY AI
           </div>
           <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#00d4e8', letterSpacing: 3, marginTop: 3 }}>
             FLEET MANAGEMENT SYSTEM

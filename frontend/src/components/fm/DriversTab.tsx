@@ -205,7 +205,7 @@ function CredentialsModal({ credentials, onClose }: {
           </div>
         </div>
         <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>
-          Share these credentials with the driver to access the CloudNext mobile app. The driver should change their password on first login.
+          Share these credentials with the driver to access the FirstCity AI mobile app. The driver should change their password on first login.
         </div>
         <button onClick={onClose} style={{ padding: '11px', borderRadius: 8, border: 'none', background: C.cyan, color: C.bg, cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14 }}>
           Done
