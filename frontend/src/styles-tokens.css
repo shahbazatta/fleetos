@@ -1,0 +1,60 @@
+/* FleetOS — Design tokens (GCC bilingual redesign)
+   Mirrors the values already used ad hoc across themeStore.ts / Navbar.tsx / LoginPage.tsx,
+   exposed as CSS custom properties for new shared components and future RTL work. */
+:root {
+  --navy-1: #050d1a;
+  --navy-2: #0a1828;
+  --navy-3: #0f2240;
+  --cyan: #00d4e8;
+  --cyan-2: #00a8be;
+
+  --fg-1: #e8eaf0;
+  --fg-2: #8da4c2;
+  --fg-3: #5d7a9a;
+  --fg-4: #3a5070;
+
+  --status-active: #22c55e;
+  --status-idle: #f59e0b;
+  --status-offline: #64748b;
+  --status-maintenance: #a855f7;
+  --status-alert: #ef4444;
+
+  --surface-bg: var(--navy-1);
+  --surface-nav: rgba(5,13,26,.95);
+  --surface-card: var(--navy-2);
+  --surface-border: rgba(0,212,232,.15);
+  --surface-border-soft: rgba(255,255,255,.07);
+  --text-primary: var(--fg-1);
+  --text-secondary: var(--fg-2);
+  --text-muted: var(--fg-3);
+  --text-dim: var(--fg-4);
+  --accent: var(--cyan);
+
+  --danger: var(--status-alert);
+  --success: var(--status-active);
+  --warning: var(--status-idle);
+
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-head-rtl: 'Cairo', var(--font-head);
+  --font-body-rtl: 'Cairo', var(--font-body);
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
+  --radius-pill: 20px;
+
+  --shadow-modal: 0 40px 80px rgba(0,0,0,.6);
+  --shadow-dropdown: 0 12px 40px rgba(0,0,0,.5);
+}
+
+/* Arabic pairing: Cairo — keeps row-heights/x-height close to DM Sans/Syne when [dir="rtl"] flips.
+   See guidelines/GCC-RTL-Guidelines.md -> "Typography & Dual-Language Scale". */
+[dir="rtl"] body { font-family: var(--font-body-rtl); line-height: 1.7; }
+[dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3, [dir="rtl"] .font-head { font-family: var(--font-head-rtl); }
+
+/* Numeric/data values (speeds, fuel %, ids, timestamps) never mirror digits or reorder. */
+.fx-ltr-data { direction: ltr; unicode-bidi: isolate; }
