@@ -61,7 +61,7 @@ interface ThemeStore {
 }
 
 const STORAGE_KEY = 'fleet_theme';
-const saved = (localStorage.getItem(STORAGE_KEY) as ThemeName) || 'dark';
+const saved = (localStorage.getItem(STORAGE_KEY) as ThemeName) || 'light';
 
 function applyTheme(theme: ThemeName) {
   document.documentElement.setAttribute('data-theme', theme);

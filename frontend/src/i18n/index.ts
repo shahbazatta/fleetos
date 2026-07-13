@@ -12,10 +12,10 @@ i18n
       en: { translation: en },
       ar: { translation: ar },
     },
-    fallbackLng: 'en',
+    fallbackLng: 'ar',
     interpolation: { escapeValue: false },
     detection: {
-      order: ['localStorage', 'navigator'],
+      order: ['localStorage'],
       caches: ['localStorage'],
       lookupLocalStorage: 'fleet_language',
     },
@@ -29,7 +29,7 @@ i18n.on('languageChanged', (lng) => {
 });
 
 // Apply on init
-const initLng = i18n.language || 'en';
+const initLng = i18n.language || 'ar';
 document.documentElement.dir = initLng === 'ar' ? 'rtl' : 'ltr';
 document.documentElement.lang = initLng;
 
