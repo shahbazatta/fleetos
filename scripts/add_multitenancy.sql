@@ -214,6 +214,7 @@ VALUES (
 -- 8. TENANT-SCOPED FLEET LIVE VIEW
 -- ──────────────────────────────────────────────────────────
 
+DROP VIEW IF EXISTS v_fleet_live CASCADE;
 CREATE OR REPLACE VIEW v_fleet_live AS
 SELECT
   v.id, v.tenant_id,

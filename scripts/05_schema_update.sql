@@ -36,7 +36,6 @@ DO $$ BEGIN RAISE NOTICE '======================================================
 DO $$ BEGIN RAISE NOTICE '[1] Ensuring extensions...'; END $$;
 
 CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE EXTENSION IF NOT EXISTS postgis_topology;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -408,3 +407,12 @@ DO $$ BEGIN RAISE NOTICE '  Next steps:'; END $$;
 DO $$ BEGIN RAISE NOTICE '    1. Run scripts/02_sample_routes.sql  — seed sample routes'; END $$;
 DO $$ BEGIN RAISE NOTICE '    2. Run scripts/04_generate_driver_credentials.sql — create mobile users'; END $$;
 DO $$ BEGIN RAISE NOTICE '======================================================'; END $$;
+
+-- Deployment fixes: columns/index required by fleet_multitenant_seed.sql
+ALTER TABLE maintenance   ADD COLUMN IF NOT EXISTS priority      TEXT;
+ALTER TABLE maintenance   ADD COLUMN IF NOT EXISTS currency      TEXT;
+ALTER TABLE maintenance   ADD COLUMN IF NOT EXISTS workshop      TEXT;
+ALTER TABLE driver_scores ADD COLUMN IF NOT EXISTS period_type   TEXT;
+ALTER TABLE driver_scores ADD COLUMN IF NOT EXISTS driving_hours TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_driver_scores_dpt
+  ON driver_scores (driver_id, period_date, period_type);

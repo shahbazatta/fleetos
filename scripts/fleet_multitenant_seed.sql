@@ -24,7 +24,6 @@ DO $$ BEGIN RAISE NOTICE '=== [S] Schema Bootstrap -- creating missing objects =
 
 -- S1. EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE EXTENSION IF NOT EXISTS postgis_topology;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS btree_gist;
@@ -513,6 +512,7 @@ DO $$ BEGIN RAISE NOTICE '    [OK] triggers created / verified'; END $$;
 
 -- S10. VIEWS & UTILITY FUNCTIONS (CREATE OR REPLACE -- always idempotent)
 
+DROP VIEW IF EXISTS v_fleet_live CASCADE;
 CREATE OR REPLACE VIEW v_fleet_live AS
 SELECT
   v.id, v.tenant_id,

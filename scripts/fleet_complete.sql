@@ -73,7 +73,6 @@ DO $$ BEGIN RAISE NOTICE '    [OK] clean'; END $$;
 DO $$ BEGIN RAISE NOTICE '[1] Installing extensions...'; END $$;
 
 CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE EXTENSION IF NOT EXISTS postgis_topology;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;      -- fuzzy text search
 CREATE EXTENSION IF NOT EXISTS btree_gist;   -- combined btree+gist indexes

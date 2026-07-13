@@ -6,3 +6,8 @@ build/
 coverage/
 pgdata/
 *.log
+
+# secrets
+.env
+**/.env
+frontend/free

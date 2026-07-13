@@ -26,7 +26,7 @@ export const THEMES: Record<ThemeName, ThemeColors> = {
     text: '#e8eaf0',
     muted: '#5d7a9a',
     cyan: '#00d4e8',
-    mapStyle: 'mapbox://styles/mapbox/dark-v11',
+    mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
   },
   light: {
     navBg: 'rgba(255,255,255,.97)',
@@ -38,7 +38,7 @@ export const THEMES: Record<ThemeName, ThemeColors> = {
     text: '#1a2a3a',
     muted: '#607080',
     cyan: '#007a8a',
-    mapStyle: 'mapbox://styles/mapbox/light-v11',
+    mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
   },
   contrast: {
     navBg: 'rgba(0,0,0,.99)',
@@ -50,7 +50,7 @@ export const THEMES: Record<ThemeName, ThemeColors> = {
     text: '#ffffff',
     muted: '#cccccc',
     cyan: '#00ffee',
-    mapStyle: 'mapbox://styles/mapbox/dark-v11',
+    mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
   },
 };
 

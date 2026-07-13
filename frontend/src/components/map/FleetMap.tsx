@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Map, { NavigationControl } from 'react-map-gl';
+import Map, { NavigationControl } from "react-map-gl/maplibre";
 import DeckGL from '@deck.gl/react';
 import { ScatterplotLayer, IconLayer, PathLayer, TextLayer } from '@deck.gl/layers';
 import { PolygonLayer } from '@deck.gl/layers';
@@ -10,7 +10,7 @@ import { useThemeStore } from '../../store/themeStore';
 import type { Vehicle, Geofence } from '../../types';
 import { statusColor } from '../../utils/colors';
 import api from '../../services/api';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import "maplibre-gl/dist/maplibre-gl.css";
 import { useTranslation } from 'react-i18next';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
@@ -306,7 +306,6 @@ export default function FleetMap({ onEditGeofence }: Props) {
       >
         <Map
           reuseMaps
-          mapboxAccessToken={MAPBOX_TOKEN}
           mapStyle={colors.mapStyle}
           attributionControl={false}
         >
