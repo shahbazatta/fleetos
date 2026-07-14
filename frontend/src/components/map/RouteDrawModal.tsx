@@ -9,7 +9,7 @@ import { useFleetStore } from '../../store/fleetStore';
 import { useThemeStore } from '../../store/themeStore';
 import { inp, lbl, sel, C } from '../fm/FMShared';
 
-const PRESET_COLORS = ['#00d4e8', '#22c55e', '#ef4444', '#f59e0b', '#a78bfa', '#fb923c', '#ec4899'];
+const PRESET_COLORS = ['var(--acc)', '#22c55e', '#ef4444', '#f59e0b', '#a78bfa', '#fb923c', '#ec4899'];
 
 interface Props {
   routeToEdit?: FMRoute | null;
@@ -32,7 +32,7 @@ export default function RouteDrawModal({ routeToEdit, onClose }: Props) {
   const [form, setForm] = useState({
     name: routeToEdit?.name || '',
     description: routeToEdit?.description || '',
-    color: routeToEdit?.color || '#00d4e8',
+    color: routeToEdit?.color || 'var(--acc)',
     duration_min: routeToEdit?.duration_min?.toString() || '',
   });
 
@@ -55,7 +55,7 @@ export default function RouteDrawModal({ routeToEdit, onClose }: Props) {
       defaultMode: isEdit ? 'simple_select' : 'draw_line_string',
       styles: [
         { 'id': 'gl-draw-line', 'type': 'line', 'filter': ['all', ['==', '$type', 'LineString']], 'layout': { 'line-cap': 'round', 'line-join': 'round' }, 'paint': { 'line-color': form.color, 'line-width': 3, 'line-dasharray': [2, 2] } },
-        { 'id': 'gl-draw-line-active', 'type': 'line', 'filter': ['all', ['==', '$type', 'LineString'], ['==', 'active', 'true']], 'layout': { 'line-cap': 'round', 'line-join': 'round' }, 'paint': { 'line-color': '#00d4e8', 'line-width': 4 } },
+        { 'id': 'gl-draw-line-active', 'type': 'line', 'filter': ['all', ['==', '$type', 'LineString'], ['==', 'active', 'true']], 'layout': { 'line-cap': 'round', 'line-join': 'round' }, 'paint': { 'line-color': 'var(--acc)', 'line-width': 4 } },
         { 'id': 'gl-draw-point', 'type': 'circle', 'filter': ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']], 'paint': { 'circle-radius': 5, 'circle-color': '#fff' } },
       ],
     });
@@ -170,7 +170,7 @@ export default function RouteDrawModal({ routeToEdit, onClose }: Props) {
         boxShadow: '-4px 0 24px rgba(0,0,0,.4)',
       }}>
         {/* Header */}
-        <div style={{ padding: '18px 20px', borderBottom: `1px solid rgba(255,255,255,.07)`, flexShrink: 0 }}>
+        <div style={{ padding: '18px 20px', borderBottom: `1px solid var(--bdr-07)`, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Route size={16} style={{ color: C.cyan }} />
@@ -196,7 +196,7 @@ export default function RouteDrawModal({ routeToEdit, onClose }: Props) {
           )}
 
           {!isEdit && (
-            <div style={{ padding: '10px 14px', borderRadius: 7, background: hasLine ? 'rgba(34,197,94,.08)' : 'rgba(0,212,232,.06)', border: `1px solid ${hasLine ? 'rgba(34,197,94,.2)' : C.border}`, fontSize: 12, color: hasLine ? C.green : C.cyan }}>
+            <div style={{ padding: '10px 14px', borderRadius: 7, background: hasLine ? 'rgba(34,197,94,.08)' : 'var(--acc-06)', border: `1px solid ${hasLine ? 'rgba(34,197,94,.2)' : C.border}`, fontSize: 12, color: hasLine ? C.green : C.cyan }}>
               {hasLine ? '✓ Route drawn — fill in the details below' : '🗺 Click on map to place route waypoints. Double-click to finish.'}
             </div>
           )}
@@ -232,12 +232,12 @@ export default function RouteDrawModal({ routeToEdit, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '16px 20px', borderTop: `1px solid rgba(255,255,255,.07)`, display: 'flex', gap: 10, flexShrink: 0 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'rgba(255,255,255,.04)', border: `1px solid rgba(255,255,255,.07)`, color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
+        <div style={{ padding: '16px 20px', borderTop: `1px solid var(--bdr-07)`, display: 'flex', gap: 10, flexShrink: 0 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'var(--fill-04)', border: `1px solid var(--bdr-07)`, color: 'var(--txt-2)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
             Cancel
           </button>
           <button onClick={handleSave} disabled={saving || (!isEdit && !hasLine)}
-            style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: (saving || (!isEdit && !hasLine)) ? 'rgba(0,212,232,.35)' : C.cyan, color: C.bg, cursor: (saving || (!isEdit && !hasLine)) ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14 }}>
+            style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: (saving || (!isEdit && !hasLine)) ? 'var(--acc-35)' : C.cyan, color: C.bg, cursor: (saving || (!isEdit && !hasLine)) ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14 }}>
             {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Route'}
           </button>
         </div>

@@ -15,7 +15,7 @@ export function Input({ label, type = 'text', value, onChange, placeholder, requ
   return (
     <div>
       {label && (
-        <label style={{ fontSize: 11, color: 'var(--text-muted, #5d7a9a)', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 6, fontFamily: 'var(--font-body, DM Sans, sans-serif)' }}>
+        <label style={{ fontSize: 11, color: 'var(--text-muted, var(--txt-3))', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 6, fontFamily: 'var(--font-body, DM Sans, sans-serif)' }}>
           {label}{required && ' *'}
         </label>
       )}
@@ -29,8 +29,8 @@ export function Input({ label, type = 'text', value, onChange, placeholder, requ
         dir="auto"
         style={{
           width: '100%', padding: '11px 14px',
-          background: 'rgba(255,255,255,.05)', border: '1px solid var(--surface-border, rgba(0,212,232,.2))',
-          borderRadius: 8, color: 'var(--text-primary, #e8eaf0)', fontSize: 14,
+          background: 'var(--fill-05)', border: '1px solid var(--surface-border, var(--acc-20))',
+          borderRadius: 8, color: 'var(--text-primary, var(--txt-1))', fontSize: 14,
           fontFamily: 'var(--font-body, DM Sans, sans-serif)', outline: 'none', boxSizing: 'border-box',
           transition: 'border-color .15s',
           ...style,

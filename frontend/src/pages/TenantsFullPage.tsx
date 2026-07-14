@@ -6,7 +6,7 @@ import AppLayout from './AppLayout';
 
 const PLAN_META: Record<string, { color: string; bg: string }> = {
   trial:      { color: '#64748b', bg: 'rgba(100,116,139,.12)' },
-  standard:   { color: '#00d4e8', bg: 'rgba(0,212,232,.10)' },
+  standard:   { color: 'var(--acc)', bg: 'var(--acc-10)' },
   pro:        { color: '#a78bfa', bg: 'rgba(167,139,250,.12)' },
   enterprise: { color: '#f59e0b', bg: 'rgba(245,158,11,.12)' },
 };
@@ -43,18 +43,18 @@ function TenantModal({ tenant, onSave, onClose }: {
     else onClose();
   };
 
-  const inp: React.CSSProperties = { width: '100%', padding: '9px 11px', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 7, color: '#e8eaf0', fontSize: 13, fontFamily: 'DM Sans, sans-serif', outline: 'none' };
-  const lbl: React.CSSProperties = { fontSize: 11, color: '#5d7a9a', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 5, fontFamily: 'DM Sans, sans-serif' };
+  const inp: React.CSSProperties = { width: '100%', padding: '9px 11px', background: 'var(--fill-04)', border: '1px solid var(--bdr-10)', borderRadius: 7, color: 'var(--txt-1)', fontSize: 13, fontFamily: 'DM Sans, sans-serif', outline: 'none' };
+  const lbl: React.CSSProperties = { fontSize: 11, color: 'var(--txt-3)', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 5, fontFamily: 'DM Sans, sans-serif' };
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: '#0a1828', border: '1px solid rgba(0,212,232,.2)', borderRadius: 16, width: '100%', maxWidth: 520, boxShadow: '0 40px 80px rgba(0,0,0,.6)', maxHeight: '90vh', overflow: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+      <div style={{ background: 'var(--srf-1)', border: '1px solid var(--acc-20)', borderRadius: 16, width: '100%', maxWidth: 520, boxShadow: '0 40px 80px rgba(0,0,0,.6)', maxHeight: '90vh', overflow: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid var(--bdr-06)' }}>
           <div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: '#e8eaf0' }}>{isEdit ? 'Edit Company' : 'Add New Company'}</div>
-            <div style={{ fontSize: 12, color: '#5d7a9a', marginTop: 2 }}>{isEdit ? tenant?.name : 'Create a new tenant organisation'}</div>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: 'var(--txt-1)' }}>{isEdit ? 'Edit Company' : 'Add New Company'}</div>
+            <div style={{ fontSize: 12, color: 'var(--txt-3)', marginTop: 2 }}>{isEdit ? tenant?.name : 'Create a new tenant organisation'}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5d7a9a', display: 'flex' }}><X size={18} /></button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--txt-3)', display: 'flex' }}><X size={18} /></button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -94,9 +94,9 @@ function TenantModal({ tenant, onSave, onClose }: {
             <label style={lbl}>Plan</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6 }}>
               {Object.entries(PLAN_META).map(([p, m]) => (
-                <label key={p} style={{ padding: '8px 0', borderRadius: 7, border: `1px solid ${plan===p ? m.color+'60' : 'rgba(255,255,255,.08)'}`, background: plan===p ? m.bg : 'rgba(255,255,255,.02)', textAlign: 'center', cursor: 'pointer' }}>
+                <label key={p} style={{ padding: '8px 0', borderRadius: 7, border: `1px solid ${plan===p ? m.color+'60' : 'var(--bdr-08)'}`, background: plan===p ? m.bg : 'var(--fill-02)', textAlign: 'center', cursor: 'pointer' }}>
                   <input type="radio" name="plan" value={p} checked={plan===p} onChange={() => setPlan(p)} style={{ display: 'none' }} />
-                  <div style={{ fontSize: 12, fontWeight: 600, color: plan===p ? m.color : '#5d7a9a', textTransform: 'capitalize' }}>{p}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: plan===p ? m.color : 'var(--txt-3)', textTransform: 'capitalize' }}>{p}</div>
                 </label>
               ))}
             </div>
@@ -115,8 +115,8 @@ function TenantModal({ tenant, onSave, onClose }: {
           </div>
 
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)', color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Cancel</button>
-            <button type="submit" disabled={saving} style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: saving ? 'rgba(0,212,232,.4)' : '#00d4e8', color: '#050d1a', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14 }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'var(--fill-04)', border: '1px solid var(--bdr-10)', color: 'var(--txt-2)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Cancel</button>
+            <button type="submit" disabled={saving} style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: saving ? 'var(--acc-40)' : 'var(--acc)', color: 'var(--srf-0)', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14 }}>
               {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Company'}
             </button>
           </div>
@@ -143,23 +143,23 @@ export default function TenantsFullPage() {
 
   return (
     <AppLayout>
-      <div style={{ flex: 1, overflow: 'auto', padding: '32px 40px', background: '#050d1a' }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '32px 40px', background: 'var(--srf-0)' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, color: '#8da4c2', cursor: 'pointer', fontSize: 13, fontFamily: 'DM Sans, sans-serif' }}>
+            <button onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'var(--fill-04)', border: '1px solid var(--bdr-10)', borderRadius: 8, color: 'var(--txt-2)', cursor: 'pointer', fontSize: 13, fontFamily: 'DM Sans, sans-serif' }}>
               <ArrowLeft size={14} /> Dashboard
             </button>
             <div>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 24, color: '#e8eaf0' }}>Tenant Management</div>
-              <div style={{ fontSize: 13, color: '#5d7a9a', marginTop: 3 }}>{tenants.length} organisations on the platform</div>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 24, color: 'var(--txt-1)' }}>Tenant Management</div>
+              <div style={{ fontSize: 13, color: 'var(--txt-3)', marginTop: 3 }}>{tenants.length} organisations on the platform</div>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={() => fetchTenants()} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, color: '#8da4c2', cursor: 'pointer', fontSize: 13, fontFamily: 'DM Sans, sans-serif' }}>
+            <button onClick={() => fetchTenants()} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', background: 'var(--fill-04)', border: '1px solid var(--bdr-10)', borderRadius: 8, color: 'var(--txt-2)', cursor: 'pointer', fontSize: 13, fontFamily: 'DM Sans, sans-serif' }}>
               <RefreshCw size={14} /> Refresh
             </button>
-            <button onClick={() => setModal(null)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 8, border: 'none', background: '#00d4e8', color: '#050d1a', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+            <button onClick={() => setModal(null)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--acc)', color: 'var(--srf-0)', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
               <Plus size={15} /> New Company
             </button>
           </div>
@@ -168,22 +168,22 @@ export default function TenantsFullPage() {
         {error && <div style={{ padding: '12px 16px', borderRadius: 8, marginBottom: 20, background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', color: '#fca5a5', fontSize: 13 }}>{error}</div>}
 
         {/* Tenant cards */}
-        {isLoading && <div style={{ textAlign: 'center', color: '#5d7a9a', padding: 60, fontSize: 14 }}>Loading...</div>}
+        {isLoading && <div style={{ textAlign: 'center', color: 'var(--txt-3)', padding: 60, fontSize: 14 }}>Loading...</div>}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 16 }}>
           {tenants.map(t => {
             const pm = PLAN_META[t.plan] || PLAN_META.standard;
             return (
-              <div key={t.id} style={{ background: '#0a1828', border: `1px solid ${t.is_active ? 'rgba(0,212,232,.12)' : 'rgba(239,68,68,.15)'}`, borderRadius: 12, padding: 20 }}>
+              <div key={t.id} style={{ background: 'var(--srf-1)', border: `1px solid ${t.is_active ? 'var(--acc-12)' : 'rgba(239,68,68,.15)'}`, borderRadius: 12, padding: 20 }}>
                 {/* Card header */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(0,212,232,.1)', border: '1px solid rgba(0,212,232,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Building2 size={20} style={{ color: '#00d4e8' }} />
+                    <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--acc-10)', border: '1px solid var(--acc-20)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Building2 size={20} style={{ color: 'var(--acc)' }} />
                     </div>
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: '#e8eaf0', fontFamily: 'DM Sans, sans-serif' }}>{t.name}</div>
-                      <div style={{ fontSize: 11, color: '#5d7a9a', fontFamily: 'JetBrains Mono, monospace', marginTop: 2 }}>{t.slug}</div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--txt-1)', fontFamily: 'DM Sans, sans-serif' }}>{t.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--txt-3)', fontFamily: 'JetBrains Mono, monospace', marginTop: 2 }}>{t.slug}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
@@ -201,19 +201,19 @@ export default function TenantsFullPage() {
                     { icon: <Truck size={13} />, val: t.vehicle_count ?? 0, label: 'Vehicles', max: t.max_vehicles },
                     { icon: <Globe size={13} />, val: t.country,            label: 'Country' },
                   ].map((s, i) => (
-                    <div key={i} style={{ background: 'rgba(255,255,255,.03)', borderRadius: 7, padding: '8px 10px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, color: '#5d7a9a', marginBottom: 3 }}>{s.icon}</div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#e8eaf0', fontFamily: 'JetBrains Mono, monospace' }}>
+                    <div key={i} style={{ background: 'var(--fill-03)', borderRadius: 7, padding: '8px 10px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, color: 'var(--txt-3)', marginBottom: 3 }}>{s.icon}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--txt-1)', fontFamily: 'JetBrains Mono, monospace' }}>
                         {s.max ? `${s.val}/${s.max}` : s.val}
                       </div>
-                      <div style={{ fontSize: 10, color: '#5d7a9a' }}>{s.label}</div>
+                      <div style={{ fontSize: 10, color: 'var(--txt-3)' }}>{s.label}</div>
                     </div>
                   ))}
                 </div>
 
                 {/* Contact info */}
                 {(t.email || t.phone) && (
-                  <div style={{ fontSize: 11, color: '#5d7a9a', fontFamily: 'DM Sans, sans-serif', marginBottom: 12, lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 11, color: 'var(--txt-3)', fontFamily: 'DM Sans, sans-serif', marginBottom: 12, lineHeight: 1.6 }}>
                     {t.email && <div>{t.email}</div>}
                     {t.phone && <div>{t.phone}</div>}
                     {t.city  && <div>{t.city}, {t.country}</div>}
@@ -221,11 +221,11 @@ export default function TenantsFullPage() {
                 )}
 
                 {/* Actions */}
-                <div style={{ display: 'flex', gap: 8, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,.05)' }}>
-                  <button onClick={() => setModal(t)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px', borderRadius: 7, border: '1px solid rgba(255,255,255,.1)', background: 'rgba(255,255,255,.04)', color: '#8da4c2', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}>
+                <div style={{ display: 'flex', gap: 8, paddingTop: 12, borderTop: '1px solid var(--fill-05)' }}>
+                  <button onClick={() => setModal(t)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px', borderRadius: 7, border: '1px solid var(--bdr-10)', background: 'var(--fill-04)', color: 'var(--txt-2)', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}>
                     <Pencil size={12} /> Edit
                   </button>
-                  <button onClick={() => updateTenant(t.id, { is_active: !t.is_active })} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px', borderRadius: 7, border: '1px solid rgba(255,255,255,.08)', background: 'rgba(255,255,255,.03)', color: t.is_active ? '#ef4444' : '#22c55e', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}>
+                  <button onClick={() => updateTenant(t.id, { is_active: !t.is_active })} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px', borderRadius: 7, border: '1px solid var(--bdr-08)', background: 'var(--fill-03)', color: t.is_active ? '#ef4444' : '#22c55e', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}>
                     {t.is_active ? <><ToggleRight size={13}/> Suspend</> : <><ToggleLeft size={13}/> Activate</>}
                   </button>
                   <button onClick={() => { setError(''); setConfirmDelete(t); }} style={{ padding: '7px 10px', borderRadius: 7, border: '1px solid rgba(239,68,68,.2)', background: 'rgba(239,68,68,.08)', color: '#ef4444', cursor: 'pointer', display: 'flex' }}>
@@ -248,13 +248,13 @@ export default function TenantsFullPage() {
 
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#0a1828', border: '1px solid rgba(239,68,68,.3)', borderRadius: 14, padding: 28, maxWidth: 400, width: '100%' }}>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: '#e8eaf0', marginBottom: 8 }}>Delete this company?</div>
-            <div style={{ fontSize: 13, color: '#8da4c2', marginBottom: 20, lineHeight: 1.6 }}>
-              <strong style={{ color: '#e8eaf0' }}>{confirmDelete.name}</strong> and all of its vehicles, drivers, trips and data will be permanently deleted. This cannot be undone.
+          <div style={{ background: 'var(--srf-1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 14, padding: 28, maxWidth: 400, width: '100%' }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: 'var(--txt-1)', marginBottom: 8 }}>Delete this company?</div>
+            <div style={{ fontSize: 13, color: 'var(--txt-2)', marginBottom: 20, lineHeight: 1.6 }}>
+              <strong style={{ color: 'var(--txt-1)' }}>{confirmDelete.name}</strong> and all of its vehicles, drivers, trips and data will be permanently deleted. This cannot be undone.
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)', color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Cancel</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'var(--fill-04)', border: '1px solid var(--bdr-10)', color: 'var(--txt-2)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Cancel</button>
               <button onClick={() => handleDelete(confirmDelete)} style={{ flex: 1, padding: '11px', borderRadius: 8, border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13 }}>Delete Company</button>
             </div>
           </div>

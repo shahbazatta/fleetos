@@ -5,7 +5,7 @@ import { useAuthStore } from '../../store/authStore';
 import { Modal, ConfirmDelete, ErrorBanner, FormRow, FormField, SaveButton, CancelButton, Table, TR, TD, inp, lbl, sel, C } from './FMShared';
 import RouteDrawModal from '../map/RouteDrawModal';
 
-const PRESET_COLORS = ['#00d4e8', '#22c55e', '#ef4444', '#f59e0b', '#a78bfa', '#fb923c', '#ec4899'];
+const PRESET_COLORS = ['var(--acc)', '#22c55e', '#ef4444', '#f59e0b', '#a78bfa', '#fb923c', '#ec4899'];
 
 function RouteForm({ route, onSave, onClose }: {
   route: FMRoute | null;
@@ -16,7 +16,7 @@ function RouteForm({ route, onSave, onClose }: {
   const [form, setForm] = useState({
     name: route?.name || '',
     description: route?.description || '',
-    color: route?.color || '#00d4e8',
+    color: route?.color || 'var(--acc)',
     duration_min: route?.duration_min?.toString() || '',
     is_active: route?.is_active ?? true,
     coordinates: '',
@@ -95,7 +95,7 @@ function RouteForm({ route, onSave, onClose }: {
             required={!isEdit}
           />
           <div style={{ fontSize: 11, color: C.dim, marginTop: 4 }}>
-            Format: <code style={{ background: 'rgba(255,255,255,.06)', padding: '1px 5px', borderRadius: 3 }}>longitude latitude</code> — min 2 points. Or use "Draw Route" for interactive drawing.
+            Format: <code style={{ background: 'var(--bdr-06)', padding: '1px 5px', borderRadius: 3 }}>longitude latitude</code> — min 2 points. Or use "Draw Route" for interactive drawing.
           </div>
         </FormField>
         <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
@@ -139,7 +139,7 @@ export function AssignRouteModal({ vehicleId, vehicleReg, currentRouteId, onClos
             ))}
           </select>
           {selected && (
-            <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(0,212,232,.08)', borderRadius: 7, fontSize: 12 }}>
+            <div style={{ marginTop: 10, padding: '8px 12px', background: 'var(--acc-08)', borderRadius: 7, fontSize: 12 }}>
               <span style={{ color: C.cyan }}>Selected: {routes.find(r => r.id === selected)?.name}</span>
             </div>
           )}
@@ -185,7 +185,7 @@ export default function RoutesTab() {
         </div>
         {canManage && (
           <>
-            <button onClick={() => setEditRoute(null)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 8, border: `1px solid rgba(255,255,255,.07)`, background: 'rgba(255,255,255,.04)', color: '#8da4c2', fontFamily: 'DM Sans, sans-serif', fontSize: 13, cursor: 'pointer' }}>
+            <button onClick={() => setEditRoute(null)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 8, border: `1px solid var(--bdr-07)`, background: 'var(--fill-04)', color: 'var(--txt-2)', fontFamily: 'DM Sans, sans-serif', fontSize: 13, cursor: 'pointer' }}>
               <Plus size={14} /> Add Route (Text)
             </button>
             <button onClick={() => setDrawRoute(null)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 8, border: 'none', background: C.cyan, color: C.bg, fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
@@ -219,7 +219,7 @@ export default function RoutesTab() {
               <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                 {canManage && (
                   <>
-                    <button onClick={e => { e.stopPropagation(); setDrawRoute(r); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid rgba(255,255,255,.07)`, background: 'rgba(255,255,255,.04)', color: '#8da4c2', cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
+                    <button onClick={e => { e.stopPropagation(); setDrawRoute(r); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid var(--bdr-07)`, background: 'var(--fill-04)', color: 'var(--txt-2)', cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
                       Edit
                     </button>
                     <button onClick={e => { e.stopPropagation(); setDeleteRoute_(r); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid rgba(239,68,68,.25)`, background: 'rgba(239,68,68,.08)', color: C.red, cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>

@@ -5,7 +5,7 @@ import { useAuthStore } from '../../store/authStore';
 import { Modal, ConfirmDelete, ErrorBanner, FormRow, FormField, SaveButton, CancelButton, Table, TR, TD, ActionButtons, inp, lbl, sel, C } from './FMShared';
 
 const ZONE_TYPES = ['delivery', 'restricted', 'depot', 'customer', 'route', 'other'];
-const PRESET_COLORS = ['#00d4e8', '#22c55e', '#ef4444', '#f59e0b', '#a78bfa', '#fb923c', '#ec4899', '#06b6d4'];
+const PRESET_COLORS = ['var(--acc)', '#22c55e', '#ef4444', '#f59e0b', '#a78bfa', '#fb923c', '#ec4899', '#06b6d4'];
 
 function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
@@ -27,7 +27,7 @@ function GeofenceForm({ geofence, onSave, onClose }: {
   const [form, setForm] = useState({
     name:           geofence?.name             || '',
     description:    geofence?.description      || '',
-    color:          geofence?.color            || '#00d4e8',
+    color:          geofence?.color            || 'var(--acc)',
     zone_type:      geofence?.zone_type        || 'delivery',
     speed_limit:    geofence?.speed_limit      || '',
     alert_on_enter: geofence?.alert_on_enter   ?? true,
@@ -123,7 +123,7 @@ function GeofenceForm({ geofence, onSave, onClose }: {
             required={!isEdit}
           />
           <div style={{ fontSize: 11, color: C.dim, marginTop: 4 }}>
-            Format: <code style={{ background: 'rgba(255,255,255,.06)', padding: '1px 5px', borderRadius: 3 }}>longitude latitude</code> — one per line or comma separated. Min 3 points.
+            Format: <code style={{ background: 'var(--bdr-06)', padding: '1px 5px', borderRadius: 3 }}>longitude latitude</code> — one per line or comma separated. Min 3 points.
           </div>
         </FormField>
         <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
@@ -152,7 +152,7 @@ function LayerRow({ layer, geofences }: { layer: GeofenceLayer; geofences: FMGeo
   return (
     <div style={{ border: `1px solid ${C.borderW}`, borderRadius: 9, marginBottom: 8, overflow: 'hidden' }}>
       {/* Layer header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'rgba(255,255,255,.02)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--fill-02)' }}>
         <div style={{ width: 12, height: 12, borderRadius: '50%', background: layer.color, flexShrink: 0 }} />
         {editing ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
@@ -182,7 +182,7 @@ function LayerRow({ layer, geofences }: { layer: GeofenceLayer; geofences: FMGeo
         <div style={{ padding: '8px 12px', borderTop: `1px solid ${C.borderW}` }}>
           {layerGeofences.length === 0 && <div style={{ fontSize: 12, color: C.dim, fontStyle: 'italic', marginBottom: 8 }}>No geofences in this layer yet</div>}
           {layerGeofences.map(g => (
-            <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 6px', borderRadius: 5, marginBottom: 2, background: 'rgba(255,255,255,.02)' }}>
+            <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 6px', borderRadius: 5, marginBottom: 2, background: 'var(--fill-02)' }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: g.color, flexShrink: 0 }} />
               <span style={{ flex: 1, fontSize: 12, color: C.text }}>{g.name}</span>
               <span style={{ fontSize: 10, color: C.muted, textTransform: 'capitalize' }}>{g.zone_type}</span>
@@ -215,24 +215,24 @@ function LayerRow({ layer, geofences }: { layer: GeofenceLayer; geofences: FMGeo
 export function LayersPanel({ geofences }: { geofences: FMGeofence[] }) {
   const { layers, createLayer } = useFMStore();
   const [newName,  setNewName]  = useState('');
-  const [newColor, setNewColor] = useState('#00d4e8');
+  const [newColor, setNewColor] = useState('var(--acc)');
   const [creating, setCreating] = useState(false);
 
   return (
-    <div style={{ background: 'rgba(255,255,255,.02)', border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 }}>
+    <div style={{ background: 'var(--fill-02)', border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Layers size={16} style={{ color: C.cyan }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: 'DM Sans, sans-serif' }}>Geofence Layers</span>
           <span style={{ fontSize: 11, color: C.muted }}>({layers.length} layers)</span>
         </div>
-        <button onClick={() => setCreating(c => !c)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: `1px solid ${C.borderW}`, background: 'rgba(255,255,255,.04)', color: C.muted, cursor: 'pointer', fontSize: 11 }}>
+        <button onClick={() => setCreating(c => !c)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: `1px solid ${C.borderW}`, background: 'var(--fill-04)', color: C.muted, cursor: 'pointer', fontSize: 11 }}>
           <Plus size={12} /> New Layer
         </button>
       </div>
 
       {creating && (
-        <div style={{ padding: '12px', borderRadius: 8, background: 'rgba(0,212,232,.05)', border: `1px solid ${C.border}`, marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ padding: '12px', borderRadius: 8, background: 'var(--acc-05)', border: `1px solid ${C.border}`, marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
           <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Layer name..." style={{ ...inp, flex: 1, padding: '7px 10px' }} />
           <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} style={{ width: 28, height: 28, border: 'none', padding: 0, cursor: 'pointer', background: 'none', borderRadius: 4 }} />
           <button onClick={() => { if (newName.trim()) { createLayer(newName.trim(), newColor); setNewName(''); setCreating(false); } }} style={{ padding: '7px 12px', borderRadius: 6, border: 'none', background: C.cyan, color: C.bg, fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Create</button>
@@ -287,7 +287,7 @@ export default function GeofencesTab() {
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
             {['all', ...ZONE_TYPES].map(t => (
-              <button key={t} onClick={() => setTypeFilter(t)} style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'DM Sans, sans-serif', background: typeFilter === t ? 'rgba(0,212,232,.2)' : 'rgba(255,255,255,.04)', color: typeFilter === t ? C.cyan : C.muted, textTransform: 'capitalize' }}>
+              <button key={t} onClick={() => setTypeFilter(t)} style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'DM Sans, sans-serif', background: typeFilter === t ? 'var(--acc-20)' : 'var(--fill-04)', color: typeFilter === t ? C.cyan : C.muted, textTransform: 'capitalize' }}>
                 {t === 'all' ? 'All' : t}
               </button>
             ))}
@@ -312,13 +312,13 @@ export default function GeofencesTab() {
                 </div>
                 {g.description && <div style={{ fontSize: 11, color: C.muted, marginTop: 2, paddingLeft: 18 }}>{g.description}</div>}
               </TD>
-              <TD><span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'rgba(255,255,255,.06)', color: C.muted, textTransform: 'capitalize' }}>{g.zone_type}</span></TD>
+              <TD><span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'var(--bdr-06)', color: C.muted, textTransform: 'capitalize' }}>{g.zone_type}</span></TD>
               <TD><div style={{ width: 20, height: 20, borderRadius: 4, background: g.color }} /></TD>
               <TD muted>{g.area_sqm ? `${(g.area_sqm / 1_000_000).toFixed(2)} km²` : '—'}</TD>
               <TD muted>{g.speed_limit ? `${g.speed_limit} km/h` : '—'}</TD>
               <TD>
                 <div style={{ display: 'flex', gap: 4 }}>
-                  {g.alert_on_enter && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 3, background: 'rgba(0,212,232,.1)', color: C.cyan }}>Enter</span>}
+                  {g.alert_on_enter && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 3, background: 'var(--acc-10)', color: C.cyan }}>Enter</span>}
                   {g.alert_on_exit  && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 3, background: 'rgba(245,158,11,.1)', color: C.amber }}>Exit</span>}
                 </div>
               </TD>

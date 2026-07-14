@@ -138,7 +138,7 @@ function AssignToDepotModal({ depot, onClose }: { depot: Depot; onClose: () => v
               {otherVehicles.map(v => (
                 <div key={v.id} style={rowStyle}>
                   <span><span style={{ fontFamily: 'JetBrains Mono, monospace', color: C.text }}>{v.registration}</span> <span style={{ color: C.muted, fontSize: 11 }}>{v.make} {v.model} · {v.depot_name || 'no depot'}</span></span>
-                  <button onClick={() => assignVehicle(v.id, true)} disabled={saving === v.id} style={{ padding: '4px 10px', borderRadius: 5, border: `1px solid ${C.border}`, background: 'rgba(0,212,232,.08)', color: C.cyan, cursor: 'pointer', fontSize: 11 }}>
+                  <button onClick={() => assignVehicle(v.id, true)} disabled={saving === v.id} style={{ padding: '4px 10px', borderRadius: 5, border: `1px solid ${C.border}`, background: 'var(--acc-08)', color: C.cyan, cursor: 'pointer', fontSize: 11 }}>
                     {saving === v.id ? '...' : 'Assign'}
                   </button>
                 </div>
@@ -167,7 +167,7 @@ function AssignToDepotModal({ depot, onClose }: { depot: Depot; onClose: () => v
               {otherDrivers.map(d => (
                 <div key={d.id} style={rowStyle}>
                   <span style={{ color: C.text }}>{d.full_name} <span style={{ color: C.muted, fontSize: 11 }}>{d.depot_name ? `· ${d.depot_name}` : '· no depot'}</span></span>
-                  <button onClick={() => assignDriver(d.id, true)} disabled={saving === d.id} style={{ padding: '4px 10px', borderRadius: 5, border: `1px solid ${C.border}`, background: 'rgba(0,212,232,.08)', color: C.cyan, cursor: 'pointer', fontSize: 11 }}>
+                  <button onClick={() => assignDriver(d.id, true)} disabled={saving === d.id} style={{ padding: '4px 10px', borderRadius: 5, border: `1px solid ${C.border}`, background: 'var(--acc-08)', color: C.cyan, cursor: 'pointer', fontSize: 11 }}>
                     {saving === d.id ? '...' : 'Assign'}
                   </button>
                 </div>
@@ -234,7 +234,7 @@ export default function DepotsTab() {
           <div key={d.id} style={{ background: C.surface, border: `1px solid ${d.is_active ? C.border : 'rgba(239,68,68,.15)'}`, borderRadius: 12, padding: 18 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 9, background: 'rgba(0,212,232,.1)', border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 9, background: 'var(--acc-10)', border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Warehouse size={18} style={{ color: C.cyan }} />
                 </div>
                 <div>
@@ -253,7 +253,7 @@ export default function DepotsTab() {
                 { label: 'Vehicles', value: d.vehicle_count ?? 0 },
                 { label: 'Drivers',  value: d.driver_count  ?? 0 },
               ].map(s => (
-                <div key={s.label} style={{ background: 'rgba(255,255,255,.03)', borderRadius: 6, padding: '7px 10px', textAlign: 'center' }}>
+                <div key={s.label} style={{ background: 'var(--fill-03)', borderRadius: 6, padding: '7px 10px', textAlign: 'center' }}>
                   <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: 'JetBrains Mono, monospace' }}>{s.value}</div>
                   <div style={{ fontSize: 10, color: C.muted }}>{s.label}</div>
                 </div>
@@ -269,8 +269,8 @@ export default function DepotsTab() {
             )}
 
             <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: `1px solid ${C.borderW}` }}>
-              {canAssign && <button onClick={() => setAssignDepot(d)} style={{ flex: 1, padding: '7px', borderRadius: 7, border: `1px solid ${C.border}`, background: 'rgba(0,212,232,.08)', color: C.cyan, cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}>Manage Assignments</button>}
-              {canManage && <button onClick={() => setEditDepot(d)} style={{ padding: '7px 10px', borderRadius: 7, border: `1px solid ${C.borderW}`, background: 'rgba(255,255,255,.04)', color: '#8da4c2', cursor: 'pointer', fontSize: 12 }}>Edit</button>}
+              {canAssign && <button onClick={() => setAssignDepot(d)} style={{ flex: 1, padding: '7px', borderRadius: 7, border: `1px solid ${C.border}`, background: 'var(--acc-08)', color: C.cyan, cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}>Manage Assignments</button>}
+              {canManage && <button onClick={() => setEditDepot(d)} style={{ padding: '7px 10px', borderRadius: 7, border: `1px solid ${C.borderW}`, background: 'var(--fill-04)', color: 'var(--txt-2)', cursor: 'pointer', fontSize: 12 }}>Edit</button>}
               {canManage && (
                 <button 
                   onClick={() => setDeleteDepot(d)}

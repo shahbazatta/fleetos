@@ -4,7 +4,7 @@ import { useFleetStore } from '../../store/fleetStore';
 import { scoreColor, STATUS_COLOR } from '../../utils/colors';
 import api from '../../services/api';
 
-const chartStyle = { fontSize: 10, fontFamily: 'JetBrains Mono, monospace', fill: '#5d7a9a' };
+const chartStyle = { fontSize: 10, fontFamily: 'JetBrains Mono, monospace', fill: 'var(--txt-3)' };
 
 export default function AnalyticsPanel() {
   const { summary, vehicles, drivers } = useFleetStore();
@@ -40,28 +40,28 @@ export default function AnalyticsPanel() {
 
   const kpi = (label: string, value: string | number, sub?: string, color?: string) => (
     <div style={{
-      background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)',
+      background: 'var(--fill-03)', border: '1px solid var(--bdr-06)',
       borderRadius: 8, padding: '12px 14px',
     }}>
-      <div style={{ fontSize: 9, color: '#5d7a9a', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6, fontFamily: 'DM Sans, sans-serif' }}>
+      <div style={{ fontSize: 9, color: 'var(--txt-3)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6, fontFamily: 'DM Sans, sans-serif' }}>
         {label}
       </div>
-      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 22, fontWeight: 700, color: color || '#e8eaf0', lineHeight: 1 }}>
+      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 22, fontWeight: 700, color: color || 'var(--txt-1)', lineHeight: 1 }}>
         {value}
       </div>
-      {sub && <div style={{ fontSize: 10, color: '#5d7a9a', marginTop: 4, fontFamily: 'DM Sans, sans-serif' }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 10, color: 'var(--txt-3)', marginTop: 4, fontFamily: 'DM Sans, sans-serif' }}>{sub}</div>}
     </div>
   );
 
   const section = (title: string) => (
-    <div style={{ fontSize: 10, color: '#5d7a9a', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 10, fontFamily: 'DM Sans, sans-serif', marginTop: 4 }}>
+    <div style={{ fontSize: 10, color: 'var(--txt-3)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 10, fontFamily: 'DM Sans, sans-serif', marginTop: 4 }}>
       {title}
     </div>
   );
 
   const tooltipStyle = {
-    contentStyle: { background: '#0a1828', border: '1px solid rgba(0,212,232,.2)', borderRadius: 6, fontSize: 11, fontFamily: 'JetBrains Mono, monospace', color: '#e8eaf0' },
-    labelStyle: { color: '#8da4c2' },
+    contentStyle: { background: 'var(--srf-1)', border: '1px solid var(--acc-20)', borderRadius: 6, fontSize: 11, fontFamily: 'JetBrains Mono, monospace', color: 'var(--txt-1)' },
+    labelStyle: { color: 'var(--txt-2)' },
   };
 
   return (
@@ -73,10 +73,10 @@ export default function AnalyticsPanel() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
           {kpi('Total Vehicles', v?.total ?? '—')}
           {kpi('Active Now', v?.active ?? '—', undefined, '#22c55e')}
-          {kpi('Avg Speed', v?.avg_speed ? `${v.avg_speed}` : '—', 'km/h', '#00d4e8')}
-          {kpi('Avg Fuel', v?.avg_fuel ? `${v.avg_fuel}%` : '—', undefined, v?.avg_fuel && v.avg_fuel < 30 ? '#ef4444' : '#e8eaf0')}
+          {kpi('Avg Speed', v?.avg_speed ? `${v.avg_speed}` : '—', 'km/h', 'var(--acc)')}
+          {kpi('Avg Fuel', v?.avg_fuel ? `${v.avg_fuel}%` : '—', undefined, v?.avg_fuel && v.avg_fuel < 30 ? '#ef4444' : 'var(--txt-1)')}
           {kpi('Safety Score', summary?.drivers.avg_safety_score ?? '—', 'fleet avg', scoreColor(summary?.drivers.avg_safety_score || 0))}
-          {kpi('Alerts Today', summary?.alerts.today ?? '—', `${summary?.alerts.critical ?? 0} critical`, summary?.alerts.critical ? '#ef4444' : '#e8eaf0')}
+          {kpi('Alerts Today', summary?.alerts.today ?? '—', `${summary?.alerts.critical ?? 0} critical`, summary?.alerts.critical ? '#ef4444' : 'var(--txt-1)')}
         </div>
       </div>
 
@@ -108,14 +108,14 @@ export default function AnalyticsPanel() {
               <AreaChart data={fuelTrend}>
                 <defs>
                   <linearGradient id="fuelGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00d4e8" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#00d4e8" stopOpacity={0.03} />
+                    <stop offset="5%" stopColor="var(--acc)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--acc)" stopOpacity={0.03} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="time" tick={chartStyle} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                 <YAxis domain={[0, 100]} tick={chartStyle} axisLine={false} tickLine={false} width={24} />
                 <Tooltip {...tooltipStyle} />
-                <Area type="monotone" dataKey="fuel" stroke="#00d4e8" strokeWidth={2} fill="url(#fuelGrad)" dot={false} />
+                <Area type="monotone" dataKey="fuel" stroke="var(--acc)" strokeWidth={2} fill="url(#fuelGrad)" dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

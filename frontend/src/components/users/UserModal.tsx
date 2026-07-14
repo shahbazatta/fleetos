@@ -6,7 +6,7 @@ import { useTenantsStore } from '../../store/tenantsStore';
 
 const ROLES: { value: UserRole; label: string; desc: string; color: string }[] = [
   { value: 'viewer',     label: 'Viewer',     desc: 'Read-only: view map, alerts and reports',             color: '#64748b' },
-  { value: 'operator',   label: 'Operator',   desc: 'Assign drivers/vehicles, manage trips and alerts',    color: '#00d4e8' },
+  { value: 'operator',   label: 'Operator',   desc: 'Assign drivers/vehicles, manage trips and alerts',    color: 'var(--acc)' },
   { value: 'admin',      label: 'Admin',      desc: 'Full tenant access: manage fleet, users and settings',color: '#a78bfa' },
   { value: 'superadmin', label: 'Superadmin', desc: 'Platform-wide access: manage all tenants and users',  color: '#f59e0b' },
 ];
@@ -102,14 +102,14 @@ export default function UserModal({ user, onSave, onClose }: Props) {
   // ── Styles ─────────────────────────────────────────────────────────────────
   const inputCss: React.CSSProperties = {
     width: '100%', padding: '10px 12px',
-    background: 'rgba(255,255,255,.04)',
-    border: '1px solid rgba(255,255,255,.1)',
-    borderRadius: 7, color: '#e8eaf0', fontSize: 13,
+    background: 'var(--fill-04)',
+    border: '1px solid var(--bdr-10)',
+    borderRadius: 7, color: 'var(--txt-1)', fontSize: 13,
     fontFamily: 'DM Sans, sans-serif', outline: 'none',
     transition: 'border-color .15s',
   };
   const labelCss: React.CSSProperties = {
-    fontSize: 11, color: '#5d7a9a', letterSpacing: 1,
+    fontSize: 11, color: 'var(--txt-3)', letterSpacing: 1,
     textTransform: 'uppercase', display: 'block', marginBottom: 5,
     fontFamily: 'DM Sans, sans-serif',
   };
@@ -125,7 +125,7 @@ export default function UserModal({ user, onSave, onClose }: Props) {
       padding: 20,
     }}>
       <div style={{
-        background: '#0a1828', border: '1px solid rgba(0,212,232,.2)',
+        background: 'var(--srf-1)', border: '1px solid var(--acc-20)',
         borderRadius: 16, width: '100%', maxWidth: 500,
         maxHeight: '92vh', display: 'flex', flexDirection: 'column',
         boxShadow: '0 40px 80px rgba(0,0,0,.6)',
@@ -133,18 +133,18 @@ export default function UserModal({ user, onSave, onClose }: Props) {
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,.06)',
+          padding: '18px 24px', borderBottom: '1px solid var(--bdr-06)',
           flexShrink: 0,
         }}>
           <div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: '#e8eaf0' }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: 'var(--txt-1)' }}>
               {isEdit ? 'Edit User' : 'Create New User'}
             </div>
-            <div style={{ fontSize: 12, color: '#5d7a9a', marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'var(--txt-3)', marginTop: 2 }}>
               {isEdit ? `Editing ${user?.email}` : 'Add a user who can log into the portal'}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5d7a9a', padding: 4, display: 'flex' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--txt-3)', padding: 4, display: 'flex' }}>
             <X size={18} />
           </button>
         </div>
@@ -188,14 +188,14 @@ export default function UserModal({ user, onSave, onClose }: Props) {
                 <label key={r.value} style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '10px 12px', borderRadius: 7, cursor: 'pointer',
-                  border: `1px solid ${role === r.value ? r.color + '60' : 'rgba(255,255,255,.06)'}`,
-                  background: role === r.value ? r.color + '14' : 'rgba(255,255,255,.02)',
+                  border: `1px solid ${role === r.value ? r.color + '60' : 'var(--bdr-06)'}`,
+                  background: role === r.value ? r.color + '14' : 'var(--fill-02)',
                   transition: 'all .15s',
                 }}>
                   <input type="radio" name="role" value={r.value} checked={role === r.value} onChange={() => handleRoleChange(r.value)} style={{ accentColor: r.color }} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: role === r.value ? r.color : '#e8eaf0' }}>{r.label}</div>
-                    <div style={{ fontSize: 11, color: '#5d7a9a', marginTop: 1 }}>{r.desc}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: role === r.value ? r.color : 'var(--txt-1)' }}>{r.label}</div>
+                    <div style={{ fontSize: 11, color: 'var(--txt-3)', marginTop: 1 }}>{r.desc}</div>
                   </div>
                   {r.value === 'superadmin' && (
                     <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(245,158,11,.15)', color: '#f59e0b', fontWeight: 700, letterSpacing: 0.5 }}>PLATFORM</span>
@@ -210,7 +210,7 @@ export default function UserModal({ user, onSave, onClose }: Props) {
             <div>
               <label style={labelCss}>
                 Company (Tenant) *
-                {tenantsLoading && <span style={{ color: '#3a5070', fontWeight: 400, marginLeft: 8 }}>loading...</span>}
+                {tenantsLoading && <span style={{ color: 'var(--txt-4)', fontWeight: 400, marginLeft: 8 }}>loading...</span>}
               </label>
 
               {activeTenants.length === 0 && !tenantsLoading ? (
@@ -240,15 +240,15 @@ export default function UserModal({ user, onSave, onClose }: Props) {
                   {selectedTenant && (
                     <div style={{
                       marginTop: 8, padding: '10px 14px', borderRadius: 8,
-                      background: 'rgba(0,212,232,.06)', border: '1px solid rgba(0,212,232,.2)',
+                      background: 'var(--acc-06)', border: '1px solid var(--acc-20)',
                       display: 'flex', alignItems: 'center', gap: 12,
                     }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(0,212,232,.12)', border: '1px solid rgba(0,212,232,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Building2 size={15} style={{ color: '#00d4e8' }} />
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--acc-12)', border: '1px solid var(--acc-25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Building2 size={15} style={{ color: 'var(--acc)' }} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#e8eaf0', fontFamily: 'DM Sans, sans-serif' }}>{selectedTenant.name}</div>
-                        <div style={{ fontSize: 11, color: '#5d7a9a', marginTop: 1, fontFamily: 'DM Sans, sans-serif' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--txt-1)', fontFamily: 'DM Sans, sans-serif' }}>{selectedTenant.name}</div>
+                        <div style={{ fontSize: 11, color: 'var(--txt-3)', marginTop: 1, fontFamily: 'DM Sans, sans-serif' }}>
                           {[selectedTenant.city, selectedTenant.country].filter(Boolean).join(', ')}
                           {' · '}
                           <span style={{ textTransform: 'capitalize' }}>{selectedTenant.plan}</span> plan
@@ -279,9 +279,9 @@ export default function UserModal({ user, onSave, onClose }: Props) {
 
           {/* Current tenant display for non-superadmin admins */}
           {!isSuperadmin && !isEdit && currentUser?.tenant && (
-            <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(0,212,232,.05)', border: '1px solid rgba(0,212,232,.15)', fontSize: 12, color: '#5d7a9a', fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Building2 size={13} style={{ color: '#00d4e8', flexShrink: 0 }} />
-              This user will be created in <strong style={{ color: '#00d4e8', marginLeft: 4 }}>{currentUser.tenant.name}</strong>
+            <div style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--acc-05)', border: '1px solid var(--acc-15)', fontSize: 12, color: 'var(--txt-3)', fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Building2 size={13} style={{ color: 'var(--acc)', flexShrink: 0 }} />
+              This user will be created in <strong style={{ color: 'var(--acc)', marginLeft: 4 }}>{currentUser.tenant.name}</strong>
             </div>
           )}
 
@@ -299,7 +299,7 @@ export default function UserModal({ user, onSave, onClose }: Props) {
                 minLength={8}
                 autoComplete="new-password"
               />
-              <button type="button" onClick={() => setShowPwd(v => !v)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#5d7a9a', display: 'flex', padding: 2 }}>
+              <button type="button" onClick={() => setShowPwd(v => !v)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--txt-3)', display: 'flex', padding: 2 }}>
                 {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
@@ -325,7 +325,7 @@ export default function UserModal({ user, onSave, onClose }: Props) {
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)', color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'var(--fill-04)', border: '1px solid var(--bdr-10)', color: 'var(--txt-2)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
               Cancel
             </button>
             <button
@@ -333,8 +333,8 @@ export default function UserModal({ user, onSave, onClose }: Props) {
               disabled={saving || (!!password && password !== confirm) || (tenantRequired && !tenantId && isSuperadmin)}
               style={{
                 flex: 2, padding: '11px', borderRadius: 8, border: 'none',
-                background: saving ? 'rgba(0,212,232,.4)' : '#00d4e8',
-                color: '#050d1a', cursor: saving ? 'not-allowed' : 'pointer',
+                background: saving ? 'var(--acc-40)' : 'var(--acc)',
+                color: 'var(--srf-0)', cursor: saving ? 'not-allowed' : 'pointer',
                 fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14,
                 opacity: (tenantRequired && !tenantId && isSuperadmin) ? 0.5 : 1,
               }}

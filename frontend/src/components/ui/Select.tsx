@@ -14,7 +14,7 @@ export function Select({ label, value, onChange, options = [], style }: SelectPr
   return (
     <div>
       {label && (
-        <label style={{ fontSize: 11, color: 'var(--text-muted, #5d7a9a)', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 6, fontFamily: 'var(--font-body, DM Sans, sans-serif)' }}>
+        <label style={{ fontSize: 11, color: 'var(--text-muted, var(--txt-3))', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 6, fontFamily: 'var(--font-body, DM Sans, sans-serif)' }}>
           {label}
         </label>
       )}
@@ -23,8 +23,8 @@ export function Select({ label, value, onChange, options = [], style }: SelectPr
         onChange={onChange}
         style={{
           width: '100%', padding: '9px 11px', cursor: 'pointer',
-          background: 'rgba(255,255,255,.04)', border: '1px solid var(--surface-border-soft, rgba(255,255,255,.07))',
-          borderRadius: 7, color: 'var(--text-primary, #e8eaf0)', fontSize: 13,
+          background: 'var(--fill-04)', border: '1px solid var(--surface-border-soft, var(--bdr-07))',
+          borderRadius: 7, color: 'var(--text-primary, var(--txt-1))', fontSize: 13,
           fontFamily: 'var(--font-body, DM Sans, sans-serif)', outline: 'none', boxSizing: 'border-box',
           ...style,
         }}

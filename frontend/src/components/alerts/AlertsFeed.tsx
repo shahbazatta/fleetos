@@ -31,18 +31,18 @@ export default function AlertsFeed() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Header */}
-      <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,.06)', flexShrink: 0 }}>
+      <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--bdr-06)', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ fontSize: 12, color: '#8da4c2', fontFamily: 'DM Sans, sans-serif' }}>
+          <div style={{ fontSize: 12, color: 'var(--txt-2)', fontFamily: 'DM Sans, sans-serif' }}>
             <span style={{ color: '#ef4444', fontWeight: 700, fontFamily: 'JetBrains Mono, monospace' }}>{unread}</span>
             {' '}unread alerts
           </div>
           {unread > 0 && (
             <button onClick={markAll} style={{
               display: 'flex', alignItems: 'center', gap: 4,
-              background: 'none', border: '1px solid rgba(255,255,255,.1)',
+              background: 'none', border: '1px solid var(--bdr-10)',
               borderRadius: 5, padding: '4px 8px', cursor: 'pointer',
-              color: '#5d7a9a', fontSize: 11, fontFamily: 'DM Sans, sans-serif',
+              color: 'var(--txt-3)', fontSize: 11, fontFamily: 'DM Sans, sans-serif',
             }}>
               <CheckCheck size={12} /> Mark all read
             </button>
@@ -55,11 +55,11 @@ export default function AlertsFeed() {
               padding: '3px 9px', borderRadius: 20, border: 'none', cursor: 'pointer',
               fontSize: 10, fontWeight: 600, fontFamily: 'DM Sans, sans-serif',
               background: filter === s
-                ? (s === 'all' ? 'rgba(0,212,232,.2)' : SEVERITY_BG[s])
-                : 'rgba(255,255,255,.04)',
+                ? (s === 'all' ? 'var(--acc-20)' : SEVERITY_BG[s])
+                : 'var(--fill-04)',
               color: filter === s
-                ? (s === 'all' ? '#00d4e8' : SEVERITY_COLOR[s])
-                : '#5d7a9a',
+                ? (s === 'all' ? 'var(--acc)' : SEVERITY_COLOR[s])
+                : 'var(--txt-3)',
             }}>
               {s.charAt(0).toUpperCase() + s.slice(1)}
               {' '}<span style={{ opacity: 0.7 }}>
@@ -73,7 +73,7 @@ export default function AlertsFeed() {
       {/* Alert list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '6px 8px' }}>
         {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', color: '#5d7a9a', fontSize: 13, paddingTop: 40, fontFamily: 'DM Sans, sans-serif' }}>
+          <div style={{ textAlign: 'center', color: 'var(--txt-3)', fontSize: 13, paddingTop: 40, fontFamily: 'DM Sans, sans-serif' }}>
             No alerts
           </div>
         )}
@@ -83,8 +83,8 @@ export default function AlertsFeed() {
             onClick={() => !a.is_read && markAlertRead(a.id)}
             style={{
               padding: '9px 10px', marginBottom: 3, borderRadius: 7,
-              background: a.is_read ? 'rgba(255,255,255,.02)' : SEVERITY_BG[a.severity],
-              border: `1px solid ${a.is_read ? 'rgba(255,255,255,.04)' : SEVERITY_COLOR[a.severity] + '40'}`,
+              background: a.is_read ? 'var(--fill-02)' : SEVERITY_BG[a.severity],
+              border: `1px solid ${a.is_read ? 'var(--fill-04)' : SEVERITY_COLOR[a.severity] + '40'}`,
               borderLeft: `3px solid ${SEVERITY_COLOR[a.severity]}`,
               cursor: a.is_read ? 'default' : 'pointer',
               opacity: a.is_read ? 0.6 : 1,
@@ -97,20 +97,20 @@ export default function AlertsFeed() {
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#e8eaf0', fontFamily: 'DM Sans, sans-serif' }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--txt-1)', fontFamily: 'DM Sans, sans-serif' }}>
                     {a.title}
                   </span>
-                  <span style={{ fontSize: 9, color: '#3a5070', flexShrink: 0, fontFamily: 'JetBrains Mono, monospace' }}>
+                  <span style={{ fontSize: 9, color: 'var(--txt-4)', flexShrink: 0, fontFamily: 'JetBrains Mono, monospace' }}>
                     {timeAgo(a.occurred_at)}
                   </span>
                 </div>
                 {a.registration && (
-                  <span style={{ fontSize: 10, color: '#00d4e8', fontFamily: 'JetBrains Mono, monospace' }}>
+                  <span style={{ fontSize: 10, color: 'var(--acc)', fontFamily: 'JetBrains Mono, monospace' }}>
                     {a.registration}
                   </span>
                 )}
                 {a.message && (
-                  <div style={{ fontSize: 10, color: '#5d7a9a', marginTop: 2, fontFamily: 'DM Sans, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 10, color: 'var(--txt-3)', marginTop: 2, fontFamily: 'DM Sans, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {a.message}
                   </div>
                 )}

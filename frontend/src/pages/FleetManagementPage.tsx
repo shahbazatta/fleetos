@@ -51,12 +51,12 @@ export default function FleetManagementPage() {
       <div style={{ flex: 1, overflow: 'auto', background: C.bg }}>
 
         {/* ── Page header ── */}
-        <div style={{ background: '#0a1828', borderBottom: `1px solid ${C.border}`, padding: '0 32px', flexShrink: 0 }}>
+        <div style={{ background: 'var(--srf-1)', borderBottom: `1px solid ${C.border}`, padding: '0 32px', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <button
                 onClick={() => navigate('/')}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', background: 'rgba(255,255,255,.04)', border: `1px solid ${C.borderW}`, borderRadius: 7, color: '#8da4c2', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', background: 'var(--fill-04)', border: `1px solid ${C.borderW}`, borderRadius: 7, color: 'var(--txt-2)', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}
               >
                 <ArrowLeft size={13} /> {t('fleet_mgmt.back')}
               </button>
@@ -93,7 +93,7 @@ export default function FleetManagementPage() {
               <button
                 onClick={() => fetchAll(tenantFilter || undefined)}
                 disabled={isLoading}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'rgba(255,255,255,.04)', border: `1px solid ${C.borderW}`, borderRadius: 8, color: '#8da4c2', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', background: 'var(--fill-04)', border: `1px solid ${C.borderW}`, borderRadius: 8, color: 'var(--txt-2)', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}
               >
                 <RefreshCw size={13} style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
                 {isLoading ? t('fleet_mgmt.loading') : t('fleet_mgmt.refresh')}
@@ -122,7 +122,7 @@ export default function FleetManagementPage() {
                   {tab.icon}
                   {tab.label}
                   {s && (
-                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, background: isActive ? 'rgba(0,212,232,.15)' : 'rgba(255,255,255,.06)', color: isActive ? C.cyan : C.muted }}>
+                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 10, background: isActive ? 'var(--acc-15)' : 'var(--bdr-06)', color: isActive ? C.cyan : C.muted }}>
                       {s.total}
                     </span>
                   )}
@@ -144,7 +144,7 @@ export default function FleetManagementPage() {
 
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        select option { background: #0a1828; color: #e8eaf0; }
+        select option { background: var(--srf-1); color: var(--txt-1); }
       `}</style>
     </AppLayout>
   );

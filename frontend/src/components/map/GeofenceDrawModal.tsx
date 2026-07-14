@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { inp, lbl, sel, C } from '../fm/FMShared';
 
 const ZONE_TYPES = ['delivery', 'restricted', 'depot', 'customer', 'route', 'other'];
-const PRESET_COLORS = ['#00d4e8', '#22c55e', '#ef4444', '#f59e0b', '#a78bfa', '#fb923c', '#ec4899'];
+const PRESET_COLORS = ['var(--acc)', '#22c55e', '#ef4444', '#f59e0b', '#a78bfa', '#fb923c', '#ec4899'];
 
 interface Props {
   geofenceToEdit?: FMGeofence | null;
@@ -35,7 +35,7 @@ export default function GeofenceDrawModal({ geofenceToEdit, onClose }: Props) {
   const [form, setForm] = useState({
     name: geofenceToEdit?.name || '',
     zone_type: geofenceToEdit?.zone_type || 'delivery',
-    color: geofenceToEdit?.color || '#00d4e8',
+    color: geofenceToEdit?.color || 'var(--acc)',
     speed_limit: geofenceToEdit?.speed_limit?.toString() || '',
     alert_on_enter: geofenceToEdit?.alert_on_enter ?? true,
     alert_on_exit: geofenceToEdit?.alert_on_exit ?? true,
@@ -195,7 +195,7 @@ export default function GeofenceDrawModal({ geofenceToEdit, onClose }: Props) {
           )}
 
           {!isEdit && (
-            <div style={{ padding: '10px 14px', borderRadius: 7, background: hasShape ? 'rgba(34,197,94,.08)' : 'rgba(0,212,232,.06)', border: `1px solid ${hasShape ? 'rgba(34,197,94,.2)' : C.border}`, fontSize: 12, color: hasShape ? C.green : C.cyan }}>
+            <div style={{ padding: '10px 14px', borderRadius: 7, background: hasShape ? 'rgba(34,197,94,.08)' : 'var(--acc-06)', border: `1px solid ${hasShape ? 'rgba(34,197,94,.2)' : C.border}`, fontSize: 12, color: hasShape ? C.green : C.cyan }}>
               {hasShape ? t('geofence_draw.hint_done') : t('geofence_draw.hint_draw')}
             </div>
           )}
@@ -245,11 +245,11 @@ export default function GeofenceDrawModal({ geofenceToEdit, onClose }: Props) {
 
         {/* Footer */}
         <div style={{ padding: '16px 20px', borderTop: `1px solid ${C.borderW}`, display: 'flex', gap: 10, flexShrink: 0 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'rgba(255,255,255,.04)', border: `1px solid ${C.borderW}`, color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'var(--fill-04)', border: `1px solid ${C.borderW}`, color: 'var(--txt-2)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
             {t('geofence_draw.cancel')}
           </button>
           <button onClick={handleSave} disabled={saving || (!isEdit && !hasShape)}
-            style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: (saving || (!isEdit && !hasShape)) ? 'rgba(0,212,232,.35)' : C.cyan, color: C.bg, cursor: (saving || (!isEdit && !hasShape)) ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14 }}>
+            style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: (saving || (!isEdit && !hasShape)) ? 'var(--acc-35)' : C.cyan, color: C.bg, cursor: (saving || (!isEdit && !hasShape)) ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14 }}>
             {saving ? '...' : isEdit ? t('geofence_draw.save_edit') : t('geofence_draw.save')}
           </button>
         </div>

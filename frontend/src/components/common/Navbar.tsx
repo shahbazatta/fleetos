@@ -26,9 +26,9 @@ function Dropdown({ trigger, children }: { trigger: React.ReactNode; children: R
       {open && (
         <div style={{
           position: 'absolute', top: '100%', insetInlineEnd: 0, marginTop: 4,
-          background: '#0a1828', border: '1px solid rgba(0,212,232,.15)',
+          background: 'var(--srf-1)', border: '1px solid var(--acc-15)',
           borderRadius: 10, padding: '6px 0', zIndex: 200,
-          boxShadow: '0 12px 40px rgba(0,0,0,.5)', minWidth: 160,
+          boxShadow: 'var(--shadow-pop)', minWidth: 160,
         }}
           onClick={() => setOpen(false)}
         >
@@ -44,10 +44,10 @@ function DropItem({ label, active, onClick }: { label: string; active?: boolean;
     <button onClick={onClick} style={{
       display: 'flex', alignItems: 'center', gap: 8, width: '100%',
       padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'start',
-      fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: active ? '#00d4e8' : '#8da4c2',
+      fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: active ? 'var(--acc)' : 'var(--txt-2)',
       fontWeight: active ? 600 : 400,
     }}>
-      {active && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00d4e8', flexShrink: 0 }} />}
+      {active && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--acc)', flexShrink: 0 }} />}
       {!active && <span style={{ width: 6, flexShrink: 0 }} />}
       {label}
     </button>
@@ -106,8 +106,8 @@ export default function Navbar() {
   const navBtn = (label: string, icon: React.ReactNode, path: string, active: boolean) => (
     <button onClick={() => navigate(active && path !== '/fleet' ? '/' : path)} style={{
       display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 7,
-      background: active ? `rgba(${theme === 'light' ? '0,120,136' : '0,212,232'},.15)` : 'rgba(255,255,255,.04)',
-      border: `1px solid ${active ? (theme === 'light' ? 'rgba(0,120,136,.4)' : 'rgba(0,212,232,.4)') : 'rgba(255,255,255,.1)'}`,
+      background: active ? `rgba(${theme === 'light' ? '0,120,136' : '0,212,232'},.15)` : 'var(--fill-04)',
+      border: `1px solid ${active ? (theme === 'light' ? 'rgba(0,120,136,.4)' : 'var(--acc-40)') : 'var(--bdr-10)'}`,
       color: active ? colors.cyan : colors.muted,
       cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif', transition: 'all .15s',
     }}>
@@ -118,7 +118,7 @@ export default function Navbar() {
   const iconBtnStyle = {
     display: 'flex', alignItems: 'center', gap: 5,
     padding: '6px 10px', borderRadius: 7,
-    background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)',
+    background: 'var(--fill-04)', border: '1px solid var(--bdr-10)',
     color: colors.muted, cursor: 'pointer', fontSize: 12,
     fontFamily: 'DM Sans, sans-serif', transition: 'all .15s',
   } as React.CSSProperties;
@@ -190,14 +190,14 @@ export default function Navbar() {
                 </span>
               </div>
             }>
-              <div style={{ padding: '6px 14px 4px', fontSize: 10, color: '#3a5070', letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif' }}>{t('common.filter_by_tenant')}</div>
+              <div style={{ padding: '6px 14px 4px', fontSize: 10, color: 'var(--txt-4)', letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif' }}>{t('common.filter_by_tenant')}</div>
               <DropItem label={t('common.all_tenants')} active={!tenantFilter} onClick={() => setTenantFilter(null)} />
               {tenants.filter(t => t.is_active).map(tenant => (
                 <DropItem key={tenant.id} label={tenant.name} active={tenantFilter === tenant.id}
                   onClick={() => setTenantFilter(tenant.id, tenant.city, tenant.country)} />
               ))}
             </Dropdown>
-            <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,.08)' }} />
+            <div style={{ width: 1, height: 24, background: 'var(--bdr-08)' }} />
           </>
         )}
 
@@ -207,7 +207,7 @@ export default function Navbar() {
           {wsConnected ? <Wifi size={14} /> : <WifiOff size={14} />}
           <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10 }}>{wsConnected ? t('nav.live') : t('nav.offline')}</span>
         </div>
-        <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,.08)' }} />
+        <div style={{ width: 1, height: 24, background: 'var(--bdr-08)' }} />
 
         {/* Theme switcher */}
         <Dropdown trigger={
@@ -216,7 +216,7 @@ export default function Navbar() {
             <span style={{ fontSize: 11 }}>{themeLabels[theme]}</span>
           </div>
         }>
-          <div style={{ padding: '6px 14px 4px', fontSize: 10, color: '#3a5070', letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif' }}>{t('themes.label')}</div>
+          <div style={{ padding: '6px 14px 4px', fontSize: 10, color: 'var(--txt-4)', letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif' }}>{t('themes.label')}</div>
           {(['dark', 'light', 'contrast'] as ThemeName[]).map(th => (
             <DropItem key={th} label={themeLabels[th]} active={theme === th} onClick={() => setTheme(th)} />
           ))}
@@ -229,18 +229,18 @@ export default function Navbar() {
             <span style={{ fontSize: 11 }}>{i18n.language === 'ar' ? 'AR' : 'EN'}</span>
           </div>
         }>
-          <div style={{ padding: '6px 14px 4px', fontSize: 10, color: '#3a5070', letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif' }}>{t('language.label')}</div>
+          <div style={{ padding: '6px 14px 4px', fontSize: 10, color: 'var(--txt-4)', letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif' }}>{t('language.label')}</div>
           <DropItem label="English" active={i18n.language === 'en'} onClick={() => changeLanguage('en')} />
           <DropItem label="العربية" active={i18n.language === 'ar'} onClick={() => changeLanguage('ar')} />
         </Dropdown>
 
-        <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,.08)' }} />
+        <div style={{ width: 1, height: 24, background: 'var(--bdr-08)' }} />
 
         {navBtn(t('nav.fleet_mgmt'), <Layers size={14} />, '/fleet', onFleetPage)}
         {isSuperadmin   && navBtn(t('nav.tenants'), <Building2 size={14} />, '/tenants', onTenantsPage)}
         {canManageUsers && navBtn(t('nav.users'),   <UserCog  size={14} />, '/users',   onUsersPage)}
 
-        <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,.08)' }} />
+        <div style={{ width: 1, height: 24, background: 'var(--bdr-08)' }} />
         <div style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif' }}>
           <span style={{ color: colors.text }}>{user?.name}</span>
           {user?.tenant && <span style={{ color: colors.muted }}> · {user.tenant.name}</span>}

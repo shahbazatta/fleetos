@@ -10,9 +10,9 @@ const SIZES: Record<Size, React.CSSProperties> = {
 };
 
 const VARIANTS: Record<Variant, React.CSSProperties> = {
-  primary: { background: 'var(--accent, #00d4e8)', color: 'var(--surface-bg, #050d1a)', border: 'none' },
-  secondary: { background: 'rgba(255,255,255,.04)', border: '1px solid var(--surface-border-soft, rgba(255,255,255,.07))', color: 'var(--text-secondary, #8da4c2)' },
-  ghost: { background: 'none', border: 'none', color: 'var(--text-muted, #5d7a9a)' },
+  primary: { background: 'var(--accent, var(--acc))', color: 'var(--surface-bg, var(--srf-0))', border: 'none' },
+  secondary: { background: 'var(--fill-04)', border: '1px solid var(--surface-border-soft, var(--bdr-07))', color: 'var(--text-secondary, var(--txt-2))' },
+  ghost: { background: 'none', border: 'none', color: 'var(--text-muted, var(--txt-3))' },
   danger: { background: 'var(--danger, #ef4444)', color: '#fff', border: 'none' },
 };
 

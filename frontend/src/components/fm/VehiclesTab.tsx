@@ -63,9 +63,9 @@ function VehicleForm({ vehicle, onSave, onClose }: {
           <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.2)', fontSize: 12, color: '#86efac', width: '100%', textAlign: 'center' }}>
             Vehicle registered successfully!
           </div>
-          <div style={{ padding: 20, background: 'rgba(0,212,232,.05)', border: `1px solid rgba(0,212,232,.15)`, borderRadius: 12, textAlign: 'center', width: '100%' }}>
+          <div style={{ padding: 20, background: 'var(--acc-05)', border: `1px solid var(--acc-15)`, borderRadius: 12, textAlign: 'center', width: '100%' }}>
             <div style={{ fontSize: 11, color: C.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Vehicle QR Code</div>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: C.cyan, wordBreak: 'break-all', padding: '12px 16px', background: 'rgba(0,212,232,.08)', borderRadius: 8, border: `1px solid rgba(0,212,232,.15)` }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: C.cyan, wordBreak: 'break-all', padding: '12px 16px', background: 'var(--acc-08)', borderRadius: 8, border: `1px solid var(--acc-15)` }}>
               {createdVehicle.qr_code}
             </div>
             <div style={{ fontSize: 11, color: C.muted, marginTop: 10, lineHeight: 1.6 }}>
@@ -73,7 +73,7 @@ function VehicleForm({ vehicle, onSave, onClose }: {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10, width: '100%' }}>
-            <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'rgba(255,255,255,.04)', border: `1px solid rgba(255,255,255,.07)`, color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Close</button>
+            <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'var(--fill-04)', border: `1px solid var(--bdr-07)`, color: 'var(--txt-2)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Close</button>
             <button onClick={copyQr} style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: copied ? C.green : C.cyan, color: C.bg, cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14 }}>
               {copied ? '✓ Copied!' : 'Copy QR Payload'}
             </button>
@@ -182,9 +182,9 @@ function QrCodeModal({ vehicle, onClose }: { vehicle: FMVehicle; onClose: () => 
   return (
     <Modal title="Vehicle QR Code" subtitle={`QR for ${vehicle.registration}`} onClose={onClose} width={400}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
-        <div style={{ padding: 20, background: 'rgba(0,212,232,.05)', border: `1px solid ${C.border}`, borderRadius: 12, textAlign: 'center', width: '100%' }}>
+        <div style={{ padding: 20, background: 'var(--acc-05)', border: `1px solid ${C.border}`, borderRadius: 12, textAlign: 'center', width: '100%' }}>
           <div style={{ fontSize: 11, color: C.muted, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>QR Payload</div>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: C.cyan, wordBreak: 'break-all', padding: '12px 16px', background: 'rgba(0,212,232,.08)', borderRadius: 8, border: `1px solid ${C.border}` }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: C.cyan, wordBreak: 'break-all', padding: '12px 16px', background: 'var(--acc-08)', borderRadius: 8, border: `1px solid ${C.border}` }}>
             {vehicle.qr_code || 'No QR code assigned'}
           </div>
           <div style={{ fontSize: 11, color: C.muted, marginTop: 12, lineHeight: 1.6 }}>
@@ -192,7 +192,7 @@ function QrCodeModal({ vehicle, onClose }: { vehicle: FMVehicle; onClose: () => 
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, width: '100%' }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'rgba(255,255,255,.04)', border: `1px solid rgba(255,255,255,.07)`, color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Close</button>
+          <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'var(--fill-04)', border: `1px solid var(--bdr-07)`, color: 'var(--txt-2)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Close</button>
           <button onClick={copy} style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: copied ? C.green : C.cyan, color: C.bg, cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14 }}>
             {copied ? '✓ Copied!' : 'Copy QR Payload'}
           </button>
@@ -241,7 +241,7 @@ export default function VehiclesTab() {
         {/* Type filter */}
         <div style={{ display: 'flex', gap: 4 }}>
           {['all', ...V_TYPES].map(t => (
-            <button key={t} onClick={() => setTypeFilter(t)} style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'DM Sans, sans-serif', background: typeFilter === t ? 'rgba(0,212,232,.2)' : 'rgba(255,255,255,.04)', color: typeFilter === t ? C.cyan : C.muted }}>
+            <button key={t} onClick={() => setTypeFilter(t)} style={{ padding: '5px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'DM Sans, sans-serif', background: typeFilter === t ? 'var(--acc-20)' : 'var(--fill-04)', color: typeFilter === t ? C.cyan : C.muted }}>
               {t === 'all' ? 'All' : `${TYPE_EMOJI[t]} ${t}`}
             </button>
           ))}
@@ -275,7 +275,7 @@ export default function VehiclesTab() {
             </TD>
             <TD>
               {v.route_name
-                ? <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, background: 'rgba(0,212,232,.1)', color: C.cyan, borderLeft: `3px solid ${v.route_color || C.cyan}`, paddingLeft: 8 }}>{v.route_name}</span>
+                ? <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, background: 'var(--acc-10)', color: C.cyan, borderLeft: `3px solid ${v.route_color || C.cyan}`, paddingLeft: 8 }}>{v.route_name}</span>
                 : <span style={{ color: C.dim, fontSize: 11 }}>No Route</span>}
             </TD>
             <TD mono>
@@ -292,20 +292,20 @@ export default function VehiclesTab() {
               <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                 {canEdit && (
                   <>
-                    <button onClick={e => { e.stopPropagation(); setAssignVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid rgba(255,255,255,.07)`, background: 'rgba(255,255,255,.04)', color: C.cyan, cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
+                    <button onClick={e => { e.stopPropagation(); setAssignVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid var(--bdr-07)`, background: 'var(--fill-04)', color: C.cyan, cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
                       Assign Driver
                     </button>
-                    <button onClick={e => { e.stopPropagation(); setRouteVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid rgba(0,212,232,.2)`, background: 'rgba(0,212,232,.06)', color: C.cyan, cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
+                    <button onClick={e => { e.stopPropagation(); setRouteVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid var(--acc-20)`, background: 'var(--acc-06)', color: C.cyan, cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
                       Route
                     </button>
-                    <button onClick={e => { e.stopPropagation(); setQrVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid rgba(255,255,255,.07)`, background: 'rgba(255,255,255,.04)', color: '#8da4c2', cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
+                    <button onClick={e => { e.stopPropagation(); setQrVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid var(--bdr-07)`, background: 'var(--fill-04)', color: 'var(--txt-2)', cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
                       QR
                     </button>
                   </>
                 )}
                 {canManage && (
                   <>
-                    <button onClick={e => { e.stopPropagation(); setEditVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid rgba(255,255,255,.07)`, background: 'rgba(255,255,255,.04)', color: '#8da4c2', cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
+                    <button onClick={e => { e.stopPropagation(); setEditVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid var(--bdr-07)`, background: 'var(--fill-04)', color: 'var(--txt-2)', cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>
                       Edit
                     </button>
                     <button onClick={e => { e.stopPropagation(); setDeleteVeh(v); }} style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid rgba(239,68,68,.25)`, background: 'rgba(239,68,68,.08)', color: C.red, cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}>

@@ -118,8 +118,8 @@ export default function FleetMap({ onEditGeofence }: Props) {
         id: 'geofences-fill',
         data: visibleGeofences.filter(g => g.is_active && g.boundary?.coordinates),
         getPolygon: (g: Geofence) => g.boundary.coordinates[0] as [number, number][],
-        getFillColor: (g: Geofence) => { const [r, gg, b] = hexToRgb(g.color || '#00d4e8'); return [r, gg, b, 25] as [number,number,number,number]; },
-        getLineColor: (g: Geofence) => { const [r, gg, b] = hexToRgb(g.color || '#00d4e8'); return [r, gg, b, 200] as [number,number,number,number]; },
+        getFillColor: (g: Geofence) => { const [r, gg, b] = hexToRgb(g.color || 'var(--acc)'); return [r, gg, b, 25] as [number,number,number,number]; },
+        getLineColor: (g: Geofence) => { const [r, gg, b] = hexToRgb(g.color || 'var(--acc)'); return [r, gg, b, 200] as [number,number,number,number]; },
         lineWidthMinPixels: 2,
         filled: true, stroked: true, pickable: true,
       }));
@@ -136,7 +136,7 @@ export default function FleetMap({ onEditGeofence }: Props) {
         .map(r => ({
           id: r.id,
           path: r.path_geojson!.coordinates as [number, number][],
-          color: r.color || '#00d4e8',
+          color: r.color || 'var(--acc)',
           isSelected: r.id === selectedRouteId,
         }));
 
@@ -265,9 +265,9 @@ export default function FleetMap({ onEditGeofence }: Props) {
     if (!object?.registration) return null;
     const v = object as Vehicle;
     return {
-      html: `<div style="background:#0a1828;border:1px solid rgba(0,212,232,.3);padding:10px 14px;border-radius:8px;font-size:12px;color:#e8eaf0;min-width:180px;font-family:'DM Sans',sans-serif">
-        <div style="font-weight:700;font-size:13px;color:#00d4e8;margin-bottom:6px">${v.registration}</div>
-        <div style="color:#8da4c2">${v.make} ${v.model}</div>
+      html: `<div style="background:var(--srf-1);border:1px solid var(--acc-30);padding:10px 14px;border-radius:8px;font-size:12px;color:var(--txt-1);min-width:180px;font-family:'DM Sans',sans-serif">
+        <div style="font-weight:700;font-size:13px;color:var(--acc);margin-bottom:6px">${v.registration}</div>
+        <div style="color:var(--txt-2)">${v.make} ${v.model}</div>
         ${v.driver_name ? `<div style="margin-top:4px">&#128100; ${v.driver_name}</div>` : ''}
         <div style="margin-top:6px;display:flex;gap:12px"><span>&#127950; ${Math.round(v.current_speed)} km/h</span><span>&#9981; ${Math.round(v.current_fuel)}%</span></div>
       </div>`,
@@ -321,24 +321,24 @@ export default function FleetMap({ onEditGeofence }: Props) {
             position: 'fixed',
             left: menuX,
             top: menuY,
-            background: '#0d1f33',
-            border: '1px solid rgba(0,212,232,.2)',
+            background: 'var(--srf-2)',
+            border: '1px solid var(--acc-20)',
             borderRadius: 10,
             zIndex: 100,
             minWidth: 200,
-            boxShadow: '0 12px 40px rgba(0,0,0,.6)',
+            boxShadow: 'var(--shadow-pop)',
             overflow: 'hidden',
             userSelect: 'none',
           }}
         >
           {/* Header */}
-          <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+          <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid var(--bdr-07)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: ctxMenu.geofence.color, flexShrink: 0 }} />
-              <span style={{ fontWeight: 700, fontSize: 13, color: '#e8eaf0', fontFamily: 'Syne, sans-serif' }}>{ctxMenu.geofence.name}</span>
+              <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--txt-1)', fontFamily: 'Syne, sans-serif' }}>{ctxMenu.geofence.name}</span>
             </div>
             {ctxMenu.geofence.zone_type && (
-              <div style={{ fontSize: 10, color: '#5d7a9a', marginTop: 2, textTransform: 'capitalize', fontFamily: 'DM Sans, sans-serif' }}>
+              <div style={{ fontSize: 10, color: 'var(--txt-3)', marginTop: 2, textTransform: 'capitalize', fontFamily: 'DM Sans, sans-serif' }}>
                 {ctxMenu.geofence.zone_type} zone
               </div>
             )}
@@ -367,17 +367,17 @@ export default function FleetMap({ onEditGeofence }: Props) {
               {ctxMenu.showLayerPicker && (
                 <div style={{
                   position: 'absolute', left: '100%', top: 0,
-                  background: '#0d1f33', border: '1px solid rgba(0,212,232,.2)',
+                  background: 'var(--srf-2)', border: '1px solid var(--acc-20)',
                   borderRadius: 8, minWidth: 180, zIndex: 101,
-                  boxShadow: '0 8px 32px rgba(0,0,0,.5)', overflow: 'hidden',
+                  boxShadow: 'var(--shadow-pop)', overflow: 'hidden',
                 }}>
                   {fmLayers.length === 0 ? (
-                    <div style={{ padding: '10px 14px', fontSize: 12, color: '#5d7a9a', fontFamily: 'DM Sans, sans-serif', fontStyle: 'italic' }}>
+                    <div style={{ padding: '10px 14px', fontSize: 12, color: 'var(--txt-3)', fontFamily: 'DM Sans, sans-serif', fontStyle: 'italic' }}>
                       No layers — create one in the Layers panel
                     </div>
                   ) : (
                     <>
-                      <div style={{ padding: '6px 14px 4px', fontSize: 10, color: '#3a5070', letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif' }}>Select Layer</div>
+                      <div style={{ padding: '6px 14px 4px', fontSize: 10, color: 'var(--txt-4)', letterSpacing: 1, textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif' }}>Select Layer</div>
                       {fmLayers.map(layer => {
                         const alreadyIn = layer.geofence_ids.includes(ctxMenu.geofence.id);
                         return (
@@ -392,12 +392,12 @@ export default function FleetMap({ onEditGeofence }: Props) {
                               width: '100%', padding: '8px 14px', background: 'none', border: 'none',
                               cursor: alreadyIn ? 'default' : 'pointer', textAlign: 'left',
                               fontSize: 12, fontFamily: 'DM Sans, sans-serif',
-                              color: alreadyIn ? '#3a5070' : '#e8eaf0',
+                              color: alreadyIn ? 'var(--txt-4)' : 'var(--txt-1)',
                             }}
                           >
                             <div style={{ width: 8, height: 8, borderRadius: '50%', background: layer.color, flexShrink: 0 }} />
                             <span style={{ flex: 1 }}>{layer.name}</span>
-                            {alreadyIn && <span style={{ fontSize: 10, color: '#3a5070' }}>✓</span>}
+                            {alreadyIn && <span style={{ fontSize: 10, color: 'var(--txt-4)' }}>✓</span>}
                           </button>
                         );
                       })}
@@ -407,7 +407,7 @@ export default function FleetMap({ onEditGeofence }: Props) {
               )}
             </div>
 
-            <div style={{ margin: '3px 10px', borderTop: '1px solid rgba(255,255,255,.06)' }} />
+            <div style={{ margin: '3px 10px', borderTop: '1px solid var(--bdr-06)' }} />
 
             {/* Delete */}
             <CtxItem
@@ -423,13 +423,13 @@ export default function FleetMap({ onEditGeofence }: Props) {
       {/* ── Delete confirm dialog ─────────────────────────────────────────── */}
       {deletingGf && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,.72)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: '#0a1828', border: '1px solid rgba(239,68,68,.3)', borderRadius: 14, padding: 28, maxWidth: 360, width: '90%' }}>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#e8eaf0', marginBottom: 8 }}>Delete Geofence?</div>
-            <div style={{ fontSize: 13, color: '#8da4c2', marginBottom: 20, lineHeight: 1.6 }}>
-              <strong style={{ color: '#e8eaf0' }}>{deletingGf.name}</strong> will be permanently removed.
+          <div style={{ background: 'var(--srf-1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 14, padding: 28, maxWidth: 360, width: '90%' }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: 'var(--txt-1)', marginBottom: 8 }}>Delete Geofence?</div>
+            <div style={{ fontSize: 13, color: 'var(--txt-2)', marginBottom: 20, lineHeight: 1.6 }}>
+              <strong style={{ color: 'var(--txt-1)' }}>{deletingGf.name}</strong> will be permanently removed.
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setDeleting(null)} style={{ flex: 1, padding: 10, borderRadius: 8, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.07)', color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Cancel</button>
+              <button onClick={() => setDeleting(null)} style={{ flex: 1, padding: 10, borderRadius: 8, background: 'var(--fill-04)', border: '1px solid var(--bdr-07)', color: 'var(--txt-2)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Cancel</button>
               <button onClick={handleDeleteGeofence} style={{ flex: 1, padding: 10, borderRadius: 8, border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13 }}>Delete</button>
             </div>
           </div>
@@ -451,16 +451,16 @@ function CtxItem({ label, icon, danger, hasSubmenu, active, onClick }: {
       onMouseLeave={() => setHovered(false)}
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        width: '100%', padding: '8px 14px', background: hovered || active ? 'rgba(255,255,255,.05)' : 'none',
+        width: '100%', padding: '8px 14px', background: hovered || active ? 'var(--fill-05)' : 'none',
         border: 'none', cursor: 'pointer', textAlign: 'left',
         fontSize: 12, fontFamily: 'DM Sans, sans-serif',
-        color: danger ? '#ef4444' : '#e8eaf0',
+        color: danger ? '#ef4444' : 'var(--txt-1)',
         transition: 'background .1s',
       }}
     >
       {icon && <span style={{ fontSize: 13, width: 16, textAlign: 'center', flexShrink: 0 }}>{icon}</span>}
       <span style={{ flex: 1 }}>{label}</span>
-      {hasSubmenu && <span style={{ color: '#5d7a9a', fontSize: 10 }}>▶</span>}
+      {hasSubmenu && <span style={{ color: 'var(--txt-3)', fontSize: 10 }}>▶</span>}
     </button>
   );
 }

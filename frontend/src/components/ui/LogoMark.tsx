@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function LogoMark({ size = 26, color = 'var(--accent, #00d4e8)' }: { size?: number; color?: string }) {
+export function LogoMark({ size = 26, color = 'var(--accent, var(--acc))' }: { size?: number; color?: string }) {
   const h = size * (32 / 28);
   return (
     <svg width={size} height={h} viewBox="0 0 28 32" fill="none" style={{ display: 'block' }}>

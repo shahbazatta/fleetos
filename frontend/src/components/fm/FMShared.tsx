@@ -3,14 +3,14 @@ import { X, Trash2, AlertTriangle } from 'lucide-react';
 
 // ── CSS vars ─────────────────────────────────────────────────────────────────
 export const C = {
-  bg:      '#050d1a',
-  surface: '#0a1828',
-  border:  'rgba(0,212,232,.12)',
-  borderW: 'rgba(255,255,255,.07)',
-  text:    '#e8eaf0',
-  muted:   '#5d7a9a',
-  dim:     '#3a5070',
-  cyan:    '#00d4e8',
+  bg:      'var(--srf-0)',
+  surface: 'var(--srf-1)',
+  border:  'var(--acc-12)',
+  borderW: 'var(--bdr-07)',
+  text:    'var(--txt-1)',
+  muted:   'var(--txt-3)',
+  dim:     'var(--txt-4)',
+  cyan:    'var(--acc)',
   green:   '#22c55e',
   amber:   '#f59e0b',
   red:     '#ef4444',
@@ -19,7 +19,7 @@ export const C = {
 
 export const inp: React.CSSProperties = {
   width: '100%', padding: '9px 11px',
-  background: 'rgba(255,255,255,.04)', border: `1px solid ${C.borderW}`,
+  background: 'var(--fill-04)', border: `1px solid ${C.borderW}`,
   borderRadius: 7, color: C.text, fontSize: 13,
   fontFamily: 'DM Sans, sans-serif', outline: 'none',
 };
@@ -66,13 +66,13 @@ export function ConfirmDelete({ name, entity, onConfirm, onCancel }: {
           </div>
           <div>
             <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: C.text, marginBottom: 5 }}>Delete {entity}?</div>
-            <div style={{ fontSize: 13, color: '#8da4c2', lineHeight: 1.6 }}>
+            <div style={{ fontSize: 13, color: 'var(--txt-2)', lineHeight: 1.6 }}>
               <strong style={{ color: C.text }}>{name}</strong> will be permanently removed. This cannot be undone.
             </div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onCancel} style={{ flex: 1, padding: '10px', borderRadius: 8, background: 'rgba(255,255,255,.04)', border: `1px solid ${C.borderW}`, color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Cancel</button>
+          <button onClick={onCancel} style={{ flex: 1, padding: '10px', borderRadius: 8, background: 'var(--fill-04)', border: `1px solid ${C.borderW}`, color: 'var(--txt-2)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>Cancel</button>
           <button onClick={onConfirm} style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: C.red, color: '#fff', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13 }}>Delete</button>
         </div>
       </div>
@@ -94,7 +94,7 @@ export function ErrorBanner({ message, onDismiss }: { message: string; onDismiss
 // ── SaveButton ────────────────────────────────────────────────────────────────
 export function SaveButton({ saving, label = 'Save Changes', onCreate = false }: { saving: boolean; label?: string; onCreate?: boolean }) {
   return (
-    <button type="submit" disabled={saving} style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: saving ? 'rgba(0,212,232,.4)' : C.cyan, color: C.bg, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14 }}>
+    <button type="submit" disabled={saving} style={{ flex: 2, padding: '11px', borderRadius: 8, border: 'none', background: saving ? 'var(--acc-40)' : C.cyan, color: C.bg, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14 }}>
       {saving ? 'Saving...' : label}
     </button>
   );
@@ -103,7 +103,7 @@ export function SaveButton({ saving, label = 'Save Changes', onCreate = false }:
 // ── CancelButton ──────────────────────────────────────────────────────────────
 export function CancelButton({ onClick }: { onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'rgba(255,255,255,.04)', border: `1px solid ${C.borderW}`, color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
+    <button type="button" onClick={onClick} style={{ flex: 1, padding: '11px', borderRadius: 8, background: 'var(--fill-04)', border: `1px solid ${C.borderW}`, color: 'var(--txt-2)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13 }}>
       Cancel
     </button>
   );
@@ -175,7 +175,7 @@ export function TR({ children, onClick }: { children: React.ReactNode; onClick?:
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ borderBottom: `1px solid ${C.borderW}`, background: hovered ? 'rgba(255,255,255,.02)' : 'transparent', cursor: onClick ? 'pointer' : 'default', transition: 'background .1s' }}
+      style={{ borderBottom: `1px solid ${C.borderW}`, background: hovered ? 'var(--fill-02)' : 'transparent', cursor: onClick ? 'pointer' : 'default', transition: 'background .1s' }}
     >
       {children}
     </tr>
@@ -199,8 +199,8 @@ export function ActionButtons({ onEdit, onDelete, onAssign, assignLabel = 'Assig
       onClick={e => { e.stopPropagation(); onClick(); }}
       style={{
         padding: '5px 10px', borderRadius: 6, border: `1px solid ${danger ? 'rgba(239,68,68,.25)' : C.borderW}`,
-        background: danger ? 'rgba(239,68,68,.08)' : 'rgba(255,255,255,.04)',
-        color: danger ? C.red : color || '#8da4c2',
+        background: danger ? 'rgba(239,68,68,.08)' : 'var(--fill-04)',
+        color: danger ? C.red : color || 'var(--txt-2)',
         cursor: 'pointer', fontSize: 11, fontFamily: 'DM Sans, sans-serif', whiteSpace: 'nowrap',
       }}
     >

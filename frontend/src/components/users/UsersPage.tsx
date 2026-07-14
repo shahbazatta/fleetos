@@ -8,7 +8,7 @@ import { timeAgo } from '../../utils/colors';
 const ROLE_META: Record<UserRole, { label: string; color: string; bg: string }> = {
   superadmin: { label: 'Superadmin', color: '#f59e0b', bg: 'rgba(245,158,11,.15)' },
   admin:      { label: 'Admin',      color: '#a78bfa', bg: 'rgba(167,139,250,.15)' },
-  operator:   { label: 'Operator',   color: '#00d4e8', bg: 'rgba(0,212,232,.12)' },
+  operator:   { label: 'Operator',   color: 'var(--acc)', bg: 'var(--acc-12)' },
   viewer:     { label: 'Viewer',     color: '#64748b', bg: 'rgba(100,116,139,.15)' },
 };
 
@@ -30,9 +30,9 @@ function Avatar({ name }: { name: string }) {
   return (
     <div style={{
       width: 36, height: 36, borderRadius: '50%',
-      background: 'rgba(0,212,232,.15)', border: '1px solid rgba(0,212,232,.3)',
+      background: 'var(--acc-15)', border: '1px solid var(--acc-30)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 12, fontWeight: 700, color: '#00d4e8',
+      fontSize: 12, fontWeight: 700, color: 'var(--acc)',
       fontFamily: 'DM Sans, sans-serif', flexShrink: 0,
     }}>
       {initials}
@@ -72,7 +72,7 @@ export default function UsersPage() {
   };
 
   const s: Record<string, React.CSSProperties> = {
-    page: { display: 'flex', flexDirection: 'column', height: '100%', background: '#050d1a', overflow: 'hidden' },
+    page: { display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--srf-0)', overflow: 'hidden' },
     header: { padding: '20px 24px 0', flexShrink: 0 },
     controls: { display: 'flex', gap: 10, padding: '14px 24px', flexShrink: 0, alignItems: 'center', flexWrap: 'wrap' },
     table: { flex: 1, overflowY: 'auto', padding: '0 16px 16px' },
@@ -81,14 +81,14 @@ export default function UsersPage() {
       gridTemplateColumns: '1fr 120px 100px 120px 80px',
       gap: 12, padding: '12px 16px',
       alignItems: 'center', borderRadius: 8,
-      borderBottom: '1px solid rgba(255,255,255,.04)',
+      borderBottom: '1px solid var(--fill-04)',
       transition: 'background .15s',
     },
     th: {
       display: 'grid',
       gridTemplateColumns: '1fr 120px 100px 120px 80px',
       gap: 12, padding: '8px 16px 10px',
-      fontSize: 10, color: '#3a5070', letterSpacing: 1,
+      fontSize: 10, color: 'var(--txt-4)', letterSpacing: 1,
       textTransform: 'uppercase', fontFamily: 'DM Sans, sans-serif',
     },
   };
@@ -99,17 +99,17 @@ export default function UsersPage() {
       <div style={s.header}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#e8eaf0' }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: 'var(--txt-1)' }}>
               User Management
             </div>
-            <div style={{ fontSize: 12, color: '#5d7a9a', marginTop: 3 }}>
+            <div style={{ fontSize: 12, color: 'var(--txt-3)', marginTop: 3 }}>
               {users.length} portal {users.length === 1 ? 'user' : 'users'} · manage access and roles
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => fetchUsers()} title="Refresh" style={{
-              padding: '8px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,.1)',
-              background: 'rgba(255,255,255,.04)', color: '#8da4c2', cursor: 'pointer', display: 'flex',
+              padding: '8px 10px', borderRadius: 7, border: '1px solid var(--bdr-10)',
+              background: 'var(--fill-04)', color: 'var(--txt-2)', cursor: 'pointer', display: 'flex',
             }}>
               <RefreshCw size={14} />
             </button>
@@ -117,7 +117,7 @@ export default function UsersPage() {
               <button onClick={() => setModalUser(null)} style={{
                 display: 'flex', alignItems: 'center', gap: 7,
                 padding: '9px 16px', borderRadius: 8, border: 'none',
-                background: '#00d4e8', color: '#050d1a',
+                background: 'var(--acc)', color: 'var(--srf-0)',
                 fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13,
                 cursor: 'pointer',
               }}>
@@ -142,15 +142,15 @@ export default function UsersPage() {
       <div style={s.controls}>
         {/* Search */}
         <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
-          <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#5d7a9a' }} />
+          <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--txt-3)' }} />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search name or email..."
             style={{
               width: '100%', padding: '8px 10px 8px 30px',
-              background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)',
-              borderRadius: 6, color: '#e8eaf0', fontSize: 12, outline: 'none',
+              background: 'var(--fill-04)', border: '1px solid var(--bdr-08)',
+              borderRadius: 6, color: 'var(--txt-1)', fontSize: 12, outline: 'none',
               fontFamily: 'DM Sans, sans-serif',
             }}
           />
@@ -162,11 +162,11 @@ export default function UsersPage() {
             padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
             fontSize: 11, fontWeight: 600, fontFamily: 'DM Sans, sans-serif',
             background: roleFilter === r
-              ? (r === 'all' ? 'rgba(0,212,232,.2)' : ROLE_META[r as UserRole]?.bg || 'rgba(0,212,232,.2)')
-              : 'rgba(255,255,255,.04)',
+              ? (r === 'all' ? 'var(--acc-20)' : ROLE_META[r as UserRole]?.bg || 'var(--acc-20)')
+              : 'var(--fill-04)',
             color: roleFilter === r
-              ? (r === 'all' ? '#00d4e8' : ROLE_META[r as UserRole]?.color || '#00d4e8')
-              : '#5d7a9a',
+              ? (r === 'all' ? 'var(--acc)' : ROLE_META[r as UserRole]?.color || 'var(--acc)')
+              : 'var(--txt-3)',
           }}>
             {r === 'all' ? `All (${users.length})` : `${ROLE_META[r as UserRole]?.label} (${users.filter(u => u.role === r).length})`}
           </button>
@@ -185,11 +185,11 @@ export default function UsersPage() {
         </div>
 
         {isLoading && (
-          <div style={{ textAlign: 'center', color: '#5d7a9a', padding: 40, fontSize: 13 }}>Loading users...</div>
+          <div style={{ textAlign: 'center', color: 'var(--txt-3)', padding: 40, fontSize: 13 }}>Loading users...</div>
         )}
 
         {!isLoading && filtered.length === 0 && (
-          <div style={{ textAlign: 'center', color: '#5d7a9a', padding: 40, fontSize: 13 }}>
+          <div style={{ textAlign: 'center', color: 'var(--txt-3)', padding: 40, fontSize: 13 }}>
             {search ? 'No users match your search' : 'No users found'}
           </div>
         )}
@@ -205,33 +205,33 @@ export default function UsersPage() {
               key={u.id}
               style={{
                 ...s.row,
-                background: isMe ? 'rgba(0,212,232,.04)' : 'transparent',
-                border: isMe ? '1px solid rgba(0,212,232,.12)' : '1px solid transparent',
-                borderBottom: '1px solid rgba(255,255,255,.04)',
+                background: isMe ? 'var(--acc-04)' : 'transparent',
+                border: isMe ? '1px solid var(--acc-12)' : '1px solid transparent',
+                borderBottom: '1px solid var(--fill-04)',
                 marginBottom: 2,
               }}
-              onMouseEnter={e => { if (!isMe) (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,.02)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = isMe ? 'rgba(0,212,232,.04)' : 'transparent'; }}
+              onMouseEnter={e => { if (!isMe) (e.currentTarget as HTMLDivElement).style.background = 'var(--fill-02)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = isMe ? 'var(--acc-04)' : 'transparent'; }}
             >
               {/* User info */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                 <Avatar name={u.full_name} />
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#e8eaf0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--txt-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {u.full_name}
                     </span>
                     {isMe && (
-                      <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, background: 'rgba(0,212,232,.15)', color: '#00d4e8' }}>
+                      <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, background: 'var(--acc-15)', color: 'var(--acc)' }}>
                         YOU
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: 11, color: '#5d7a9a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 11, color: 'var(--txt-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {u.email}
                   </div>
                   {u.phone && (
-                    <div style={{ fontSize: 10, color: '#3a5070' }}>{u.phone}</div>
+                    <div style={{ fontSize: 10, color: 'var(--txt-4)' }}>{u.phone}</div>
                   )}
                 </div>
               </div>
@@ -251,7 +251,7 @@ export default function UsersPage() {
               </div>
 
               {/* Last login */}
-              <div style={{ fontSize: 11, color: '#5d7a9a', fontFamily: 'JetBrains Mono, monospace' }}>
+              <div style={{ fontSize: 11, color: 'var(--txt-3)', fontFamily: 'JetBrains Mono, monospace' }}>
                 {u.last_login ? timeAgo(u.last_login) : 'Never'}
               </div>
 
@@ -262,8 +262,8 @@ export default function UsersPage() {
                     onClick={() => setModalUser(u)}
                     title="Edit user"
                     style={{
-                      padding: '5px 7px', borderRadius: 5, border: '1px solid rgba(255,255,255,.08)',
-                      background: 'rgba(255,255,255,.04)', color: '#8da4c2',
+                      padding: '5px 7px', borderRadius: 5, border: '1px solid var(--bdr-08)',
+                      background: 'var(--fill-04)', color: 'var(--txt-2)',
                       cursor: 'pointer', display: 'flex',
                     }}
                   >
@@ -275,8 +275,8 @@ export default function UsersPage() {
                     onClick={() => toggleActive(u.id, !u.is_active)}
                     title={u.is_active ? 'Deactivate' : 'Activate'}
                     style={{
-                      padding: '5px 7px', borderRadius: 5, border: '1px solid rgba(255,255,255,.08)',
-                      background: 'rgba(255,255,255,.04)',
+                      padding: '5px 7px', borderRadius: 5, border: '1px solid var(--bdr-08)',
+                      background: 'var(--fill-04)',
                       color: u.is_active ? '#ef4444' : '#22c55e',
                       cursor: 'pointer', display: 'flex',
                     }}
@@ -320,7 +320,7 @@ export default function UsersPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
         }}>
           <div style={{
-            background: '#0a1828', border: '1px solid rgba(239,68,68,.3)',
+            background: 'var(--srf-1)', border: '1px solid rgba(239,68,68,.3)',
             borderRadius: 14, padding: 28, maxWidth: 380, width: '100%',
             boxShadow: '0 40px 80px rgba(0,0,0,.6)',
           }}>
@@ -333,11 +333,11 @@ export default function UsersPage() {
                 <Trash2 size={16} style={{ color: '#ef4444' }} />
               </div>
               <div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#e8eaf0', marginBottom: 4 }}>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: 'var(--txt-1)', marginBottom: 4 }}>
                   Delete user?
                 </div>
-                <div style={{ fontSize: 13, color: '#8da4c2' }}>
-                  <strong style={{ color: '#e8eaf0' }}>{confirmDelete.full_name}</strong> ({confirmDelete.email}) will be permanently removed and will no longer be able to log in.
+                <div style={{ fontSize: 13, color: 'var(--txt-2)' }}>
+                  <strong style={{ color: 'var(--txt-1)' }}>{confirmDelete.full_name}</strong> ({confirmDelete.email}) will be permanently removed and will no longer be able to log in.
                 </div>
               </div>
             </div>
@@ -346,8 +346,8 @@ export default function UsersPage() {
                 onClick={() => setConfirmDelete(null)}
                 style={{
                   flex: 1, padding: '10px', borderRadius: 7,
-                  background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)',
-                  color: '#8da4c2', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13,
+                  background: 'var(--fill-04)', border: '1px solid var(--bdr-10)',
+                  color: 'var(--txt-2)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 13,
                 }}
               >
                 Cancel

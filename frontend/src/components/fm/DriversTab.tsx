@@ -90,7 +90,7 @@ function DriverForm({ driver, onSave, onClose }: {
         </FormRow>
         {!isEdit && (
           <>
-            <div style={{ margin: '4px 0 0', borderTop: `1px solid rgba(255,255,255,.07)`, paddingTop: 12 }}>
+            <div style={{ margin: '4px 0 0', borderTop: `1px solid var(--bdr-07)`, paddingTop: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.cyan, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Mobile App Credentials</div>
             </div>
             <FormRow>
@@ -161,7 +161,7 @@ function AssignDriverModal({ driver, onClose }: { driver: FMDriver; onClose: () 
             ))}
           </select>
           {selected && (
-            <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(0,212,232,.08)', borderRadius: 7, fontSize: 12, color: C.cyan }}>
+            <div style={{ marginTop: 10, padding: '8px 12px', background: 'var(--acc-08)', borderRadius: 7, fontSize: 12, color: C.cyan }}>
               Selected: {vehicles.find(v => v.id === selected)?.registration}
             </div>
           )}
@@ -264,7 +264,7 @@ export default function DriversTab() {
           <TR key={d.id}>
             <TD>
               <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,212,232,.12)', border: '1px solid rgba(0,212,232,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: C.cyan, flexShrink: 0 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--acc-12)', border: '1px solid var(--acc-25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: C.cyan, flexShrink: 0 }}>
                   {d.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
                 <div>
