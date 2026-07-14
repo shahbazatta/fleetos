@@ -30,7 +30,7 @@ export default function Sidebar() {
     <div style={{
       width: 340, height: '100%', display: 'flex', flexDirection: 'column',
       background: colors.sidebarBg,
-      borderRight: `1px solid ${colors.sidebarBorder}`,
+      borderInlineEnd: `1px solid ${colors.sidebarBorder}`,
       flexShrink: 0, zIndex: 20,
       transition: 'background .2s, border-color .2s',
     }}>
@@ -57,7 +57,7 @@ export default function Sidebar() {
             {t.id === 'alerts' && unreadCount > 0 && (
               <span style={{
                 position: 'absolute', top: 6, right: '50%', transform: 'translateX(10px)',
-                background: '#ef4444', color: '#fff', borderRadius: 10,
+                background: '#e14b42', color: '#fff', borderRadius: 10,
                 fontSize: 9, padding: '1px 5px', fontWeight: 700, lineHeight: 1.4,
               }}>
                 {unreadCount > 99 ? '99+' : unreadCount}

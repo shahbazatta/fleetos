@@ -85,3 +85,6 @@ select option { background: #0a1828; color: #e8eaf0; }
 .mapbox-gl-draw_ctrl-draw-btn {
   filter: invert(0.8) sepia(1) hue-rotate(160deg) saturate(2);
 }
+
+/* Directional icons (chevrons) mirror under RTL; status dots and the map never do */
+[dir="rtl"] .rtl-flip { transform: scaleX(-1); }

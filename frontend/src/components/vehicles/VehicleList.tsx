@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Search, ChevronRight } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
-import { STATUS_COLOR, STATUS_BG, TYPE_EMOJI, formatSpeed, formatFuel, timeAgo } from '../../utils/colors';
+import { useThemeStore } from '../../store/themeStore';
+import { STATUS_COLOR, STATUS_BG, formatSpeed, formatFuel } from '../../utils/colors';
 import type { VehicleStatus } from '../../types';
 
 const STATUS_TABS: { id: VehicleStatus | 'all'; label: string }[] = [
@@ -14,8 +15,10 @@ const STATUS_TABS: { id: VehicleStatus | 'all'; label: string }[] = [
 
 export default function VehicleList() {
   const { vehicles, selectVehicle } = useFleetStore();
+  const { colors } = useThemeStore();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | 'all'>('all');
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return vehicles.filter(v => {
@@ -39,115 +42,108 @@ export default function VehicleList() {
       {/* Search */}
       <div style={{ padding: '12px 14px 0', flexShrink: 0 }}>
         <div style={{ position: 'relative' }}>
-          <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#5d7a9a' }} />
+          <Search size={13} style={{ position: 'absolute', insetInlineStart: 10, top: '50%', transform: 'translateY(-50%)', color: colors.muted }} />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search vehicles or drivers..."
+            dir="auto"
             style={{
-              width: '100%', padding: '8px 10px 8px 30px',
-              background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)',
-              borderRadius: 6, color: '#e8eaf0', fontSize: 12,
+              width: '100%', padding: '8px 10px', paddingInlineStart: 30,
+              background: 'rgba(127,138,160,.08)', border: `1px solid ${colors.sidebarBorder}`,
+              borderRadius: 8, color: colors.text, fontSize: 12,
               fontFamily: 'DM Sans, sans-serif', outline: 'none',
             }}
           />
         </div>
       </div>
 
-      {/* Status filter tabs */}
+      {/* Status filter chips */}
       <div style={{ display: 'flex', gap: 4, padding: '10px 14px', flexShrink: 0, overflowX: 'auto' }}>
-        {STATUS_TABS.map(t => (
+        {STATUS_TABS.map(tab => (
           <button
-            key={t.id}
-            onClick={() => setStatusFilter(t.id)}
+            key={tab.id}
+            onClick={() => setStatusFilter(tab.id)}
             style={{
               padding: '4px 10px', borderRadius: 20, border: 'none', cursor: 'pointer',
               fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, whiteSpace: 'nowrap',
-              background: statusFilter === t.id
-                ? (t.id === 'all' ? 'rgba(0,212,232,.2)' : STATUS_BG[t.id as VehicleStatus])
-                : 'rgba(255,255,255,.04)',
-              color: statusFilter === t.id
-                ? (t.id === 'all' ? '#00d4e8' : STATUS_COLOR[t.id as VehicleStatus])
-                : '#5d7a9a',
+              background: statusFilter === tab.id
+                ? (tab.id === 'all' ? `${colors.cyan}1f` : STATUS_BG[tab.id as VehicleStatus])
+                : 'rgba(127,138,160,.08)',
+              color: statusFilter === tab.id
+                ? (tab.id === 'all' ? colors.cyan : STATUS_COLOR[tab.id as VehicleStatus])
+                : colors.muted,
             }}
           >
-            {t.label} <span style={{ opacity: 0.7 }}>{counts[t.id] ?? 0}</span>
+            {tab.label} <span style={{ opacity: 0.7 }}>{counts[tab.id] ?? 0}</span>
           </button>
         ))}
       </div>
 
-      {/* Vehicle rows */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px 8px' }}>
+      {/* Vehicle cards — dot + ID + driver by default; telemetry on hover */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '2px 12px 12px' }}>
         {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', color: '#5d7a9a', fontSize: 13, paddingTop: 40, fontFamily: 'DM Sans, sans-serif' }}>
+          <div style={{ textAlign: 'center', color: colors.muted, fontSize: 13, paddingTop: 40, fontFamily: 'DM Sans, sans-serif' }}>
             No vehicles found
           </div>
         )}
-        {filtered.map(v => (
-          <div
-            key={v.id}
-            onClick={() => selectVehicle(v.id)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 10px',
-              borderRadius: 8, cursor: 'pointer', marginBottom: 2,
-              background: 'rgba(255,255,255,.02)',
-              border: '1px solid rgba(255,255,255,.04)',
-              transition: 'background .15s, border-color .15s',
-            }}
-            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(0,212,232,.05)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,212,232,.15)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,.02)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,.04)'; }}
-          >
-            {/* Status dot + emoji */}
-            <div style={{ position: 'relative', flexShrink: 0 }}>
+        {filtered.map(v => {
+          const hovered = hoveredId === v.id;
+          return (
+            <div
+              key={v.id}
+              onClick={() => selectVehicle(v.id)}
+              onMouseEnter={() => setHoveredId(v.id)}
+              onMouseLeave={() => setHoveredId(null)}
+              style={{
+                padding: '12px 14px', borderRadius: 10, marginBottom: 8, cursor: 'pointer',
+                background: hovered ? 'rgba(127,138,160,.07)' : 'transparent',
+                border: `1px solid ${hovered ? `${colors.cyan}55` : colors.sidebarBorder}`,
+                transition: 'background .15s, border-color .15s',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{
+                  width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                  background: STATUS_COLOR[v.status],
+                  boxShadow: `0 0 0 3px ${STATUS_COLOR[v.status]}22`,
+                }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                    <span dir="ltr" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 700, color: colors.text }}>
+                      {v.registration}
+                    </span>
+                    {v.unread_alerts ? (
+                      <span style={{ background: STATUS_COLOR.alert, color: '#fff', borderRadius: 10, fontSize: 9, padding: '1px 6px', fontWeight: 700, flexShrink: 0 }}>
+                        {v.unread_alerts}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div style={{ fontSize: 12, color: colors.muted, marginTop: 2, fontFamily: 'DM Sans, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {v.driver_name || `${v.make} ${v.model}`}
+                  </div>
+                </div>
+                <ChevronRight size={14} className="rtl-flip" style={{ color: colors.muted, opacity: 0.5, flexShrink: 0 }} />
+              </div>
+
+              {/* Secondary telemetry — hidden until hover */}
               <div style={{
-                width: 36, height: 36, borderRadius: 8, fontSize: 18,
-                background: 'rgba(255,255,255,.04)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                maxHeight: hovered ? 34 : 0, opacity: hovered ? 1 : 0, overflow: 'hidden',
+                transition: 'max-height .18s ease, opacity .15s ease',
               }}>
-                {TYPE_EMOJI[v.type]}
-              </div>
-              <div style={{
-                position: 'absolute', bottom: -2, right: -2,
-                width: 10, height: 10, borderRadius: '50%',
-                background: STATUS_COLOR[v.status],
-                border: '1.5px solid #0a1828',
-              }} />
-            </div>
-
-            {/* Main info */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 700, color: '#00d4e8' }}>
-                  {v.registration}
-                </span>
-                {v.unread_alerts ? (
-                  <span style={{ background: '#ef4444', color: '#fff', borderRadius: 10, fontSize: 9, padding: '1px 5px', fontWeight: 700 }}>
-                    {v.unread_alerts}
-                  </span>
-                ) : null}
-              </div>
-              <div style={{ fontSize: 11, color: '#8da4c2', marginTop: 1, fontFamily: 'DM Sans, sans-serif' }}>
-                {v.make} {v.model}
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                <span style={{ fontSize: 10, color: v.current_speed > 0 ? '#22c55e' : '#5d7a9a', fontFamily: 'JetBrains Mono, monospace' }}>
-                  {formatSpeed(v.current_speed)}
-                </span>
-                <span style={{ fontSize: 10, color: v.current_fuel < 20 ? '#ef4444' : '#5d7a9a', fontFamily: 'JetBrains Mono, monospace' }}>
-                  ⛽ {formatFuel(v.current_fuel)}
-                </span>
-                {v.driver_name && (
-                  <span style={{ fontSize: 10, color: '#5d7a9a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    👤 {v.driver_name.split(' ')[0]}
-                  </span>
-                )}
+                <div dir="ltr" style={{
+                  display: 'flex', gap: 16, paddingTop: 9, marginTop: 9,
+                  borderTop: `1px dashed ${colors.sidebarBorder}`,
+                  fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: colors.muted,
+                }}>
+                  <span>{formatSpeed(v.current_speed)}</span>
+                  <span>{formatFuel(v.current_fuel)} fuel</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.make} {v.model}</span>
+                </div>
               </div>
             </div>
-
-            <ChevronRight size={14} style={{ color: '#3a5070', flexShrink: 0 }} />
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { useFleetStore } from '../../store/fleetStore';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore, type ThemeName } from '../../store/themeStore';
 import { useTenantsStore } from '../../store/tenantsStore';
+import { STATUS_COLOR, SEVERITY_COLOR } from '../../utils/colors';
 
 function Dropdown({ trigger, children }: { trigger: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -81,12 +82,26 @@ export default function Navbar() {
     localStorage.setItem('fleet_language', lng);
   };
 
-  const kpi = (val: string | number | undefined, label: string, color = colors.text) => (
-    <div style={{ textAlign: 'center', padding: '0 12px', borderInlineEnd: `1px solid rgba(255,255,255,.06)` }}>
-      <div dir="ltr" style={{ fontSize: 18, fontWeight: 800, color, fontFamily: 'JetBrains Mono, monospace', lineHeight: 1 }}>{val ?? '—'}</div>
-      <div style={{ fontSize: 9, color: colors.muted, marginTop: 2, letterSpacing: 1, textTransform: 'uppercase' }}>{label}</div>
+  // Consolidated KPI cells: status color lives in the dot, numbers stay neutral;
+  // alert counts are the only colored numerals, isolated at the strip's end.
+  const statCell = (val: string | number | undefined, label: string, dot?: string) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 12px' }}>
+      {dot && <span style={{ width: 8, height: 8, borderRadius: '50%', background: dot, boxShadow: `0 0 0 3px ${dot}22`, flexShrink: 0 }} />}
+      <div>
+        <div dir="ltr" style={{ fontSize: 16, fontWeight: 700, color: colors.text, fontFamily: 'JetBrains Mono, monospace', lineHeight: 1.1 }}>{val ?? '—'}</div>
+        <div style={{ fontSize: 8.5, color: colors.muted, marginTop: 1, letterSpacing: 0.8, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</div>
+      </div>
     </div>
   );
+
+  const alertCell = (val: number, label: string, color: string) => (
+    <div style={{ padding: '0 12px' }}>
+      <div dir="ltr" style={{ fontSize: 16, fontWeight: 700, color: val > 0 ? color : colors.muted, fontFamily: 'JetBrains Mono, monospace', lineHeight: 1.1 }}>{val}</div>
+      <div style={{ fontSize: 8.5, color: colors.muted, marginTop: 1, letterSpacing: 0.8, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</div>
+    </div>
+  );
+
+  const groupRule = <div style={{ width: 1, height: 24, background: colors.sidebarBorder, flexShrink: 0 }} />;
 
   const navBtn = (label: string, icon: React.ReactNode, path: string, active: boolean) => (
     <button onClick={() => navigate(active && path !== '/fleet' ? '/' : path)} style={{
@@ -141,14 +156,18 @@ export default function Navbar() {
       {/* KPI strip — dashboard only */}
       {onDashboard ? (
         <div style={{ display: 'flex', alignItems: 'center', flex: 1, overflow: 'hidden' }}>
-          {kpi(v?.total, t('kpi.total'))}
-          {kpi(v?.active, t('kpi.active'), '#22c55e')}
-          {kpi(v?.idle, t('kpi.idle'), '#f59e0b')}
-          {kpi(v?.offline, t('kpi.offline'), '#64748b')}
-          {kpi(v?.avg_speed ? `${v.avg_speed}` : '—', t('kpi.avg_speed'), colors.cyan)}
-          {kpi(v?.avg_fuel ? `${v.avg_fuel}%` : '—', t('kpi.avg_fuel'))}
-          {kpi(a?.critical ?? 0, t('kpi.critical'), a?.critical ? '#ef4444' : colors.text)}
-          {kpi(a?.unread ?? 0, t('kpi.unread'), a?.unread ? '#f59e0b' : colors.text)}
+          {statCell(v?.total, t('kpi.total'))}
+          {groupRule}
+          {statCell(v?.active, t('kpi.active'), STATUS_COLOR.active)}
+          {statCell(v?.idle, t('kpi.idle'), STATUS_COLOR.idle)}
+          {statCell(v?.offline, t('kpi.offline'), STATUS_COLOR.offline)}
+          {groupRule}
+          <div dir="ltr" style={{ padding: '0 12px', fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: colors.muted, whiteSpace: 'nowrap' }}>
+            {v?.avg_speed ?? '—'} km/h · {v?.avg_fuel ?? '—'}%
+          </div>
+          <div style={{ flex: 1 }} />
+          {alertCell(a?.critical ?? 0, t('kpi.critical'), SEVERITY_COLOR.critical)}
+          {alertCell(a?.unread ?? 0, t('kpi.unread'), SEVERITY_COLOR.warning)}
         </div>
       ) : (
         <div style={{ flex: 1, padding: '0 16px' }}>

@@ -1,31 +1,31 @@
 import type { VehicleStatus, AlertSeverity, VehicleType } from '../types';
 
 export const STATUS_COLOR: Record<VehicleStatus, string> = {
-  active:      '#22c55e',
-  idle:        '#f59e0b',
+  active:      '#0f9d74',
+  idle:        '#c9862b',
   offline:     '#64748b',
-  maintenance: '#a855f7',
-  alert:       '#ef4444',
+  maintenance: '#8b7cd8',
+  alert:       '#e14b42',
 };
 
 export const STATUS_BG: Record<VehicleStatus, string> = {
-  active:      'rgba(34,197,94,0.15)',
-  idle:        'rgba(245,158,11,0.15)',
+  active:      'rgba(15,157,116,0.12)',
+  idle:        'rgba(201,134,43,0.12)',
   offline:     'rgba(100,116,139,0.15)',
-  maintenance: 'rgba(168,85,247,0.15)',
-  alert:       'rgba(239,68,68,0.15)',
+  maintenance: 'rgba(139,124,216,0.12)',
+  alert:       'rgba(225,75,66,0.12)',
 };
 
 export const SEVERITY_COLOR: Record<AlertSeverity, string> = {
-  critical: '#ef4444',
-  warning:  '#f59e0b',
-  info:     '#00d4e8',
+  critical: '#e14b42',
+  warning:  '#c9862b',
+  info:     '#64748b',
 };
 
 export const SEVERITY_BG: Record<AlertSeverity, string> = {
-  critical: 'rgba(239,68,68,0.15)',
-  warning:  'rgba(245,158,11,0.15)',
-  info:     'rgba(0,212,232,0.12)',
+  critical: 'rgba(225,75,66,0.12)',
+  warning:  'rgba(201,134,43,0.12)',
+  info:     'rgba(100,116,139,0.12)',
 };
 
 export const TYPE_EMOJI: Record<VehicleType, string> = {
@@ -46,15 +46,15 @@ export function statusColor(status: VehicleStatus): [number, number, number, num
 }
 
 export function scoreColor(score: number): string {
-  if (score >= 85) return '#22c55e';
-  if (score >= 70) return '#f59e0b';
-  return '#ef4444';
+  if (score >= 85) return '#0f9d74';
+  if (score >= 70) return '#c9862b';
+  return '#e14b42';
 }
 
 export function fuelColor(pct: number): string {
-  if (pct > 40) return '#22c55e';
-  if (pct > 15) return '#f59e0b';
-  return '#ef4444';
+  if (pct > 40) return '#0f9d74';
+  if (pct > 15) return '#c9862b';
+  return '#e14b42';
 }
 
 export function formatSpeed(s: number) { return `${Math.round(s)} km/h`; }
